@@ -4,65 +4,39 @@ import api from "../services/api";
 import RestaurantCard from "../components/RestaurantCard";
 import FoodCard from "../components/FoodCard";
 import { useCart } from "../context/CartContext";
-import { Sparkles, UtensilsCrossed } from "lucide-react";
-import { Link } from "react-router-dom";
-import { Star, MapPin, Clock } from "lucide-react";
-import axios from "axios";
+import {
+  Sparkles,
+  UtensilsCrossed,
+  Search,
+  Star,
+  MapPin,
+  Clock,
+  ChevronRight,
+  Filter,
+  X,
+} from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 
 const Home: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [foods, setFoods] = useState<Food[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const navigate = useNavigate();
 
   const [selectedCategory, setSelectedCategory] = useState<string | "all">(
     "all"
   );
   const { addToCart } = useCart();
 
-  // useEffect(() => {
-  //   const fetchAll = async () => {
-  //     try {
-  //       const [catRes, restRes, foodRes] = await Promise.all([
-  //         api.get("/catogary/getAllCategories"),
-  //         api.get("/restaurant/getAllRestaurants"),
-  //         api.get("/api/food/getAllFoods"),
-  //       ]);
-
-  //       setCategories(catRes.data.categories || catRes.data.data || []);
-  //       setRestaurants(
-  //         restRes.data.restaurants || restRes.data.data || restRes.data
-  //       );
-  //       setFoods(foodRes.data.foods || foodRes.data.data || []);
-  //     } catch (err) {
-  //       console.error("Home fetch error:", err);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-
-  //   fetchAll();
-  // }, []);
   useEffect(() => {
     const fetchAll = async () => {
       try {
-        // const [catRes, restRes, foodRes] = await Promise.all([
-        //   api.get("/catogary/getAllCategories"), // ✅ Matches backend /catogary/*
-        //   api.get("/restaurant/getAllRestaurants"), // ✅ Matches /restaurant/*
-        //   api.get("/api/food/getAllFoods"), // ✅ Matches /api/food/*
-        // ]);
         const catRes = await api.get("/catogary/getAllCategories");
-        const restRes = await api.get("/restaurant/getAllRestaurants"); // ✅ Fixed
+        const restRes = await api.get("/restaurant/getAllRestaurants");
         const foodRes = await api.get("/api/food/getAllFoods");
 
-        // setCategories(catRes.data || []); // ✅ Simpler data access
-        // setRestaurants(restRes.data || []);
-        // setFoods(foodRes.data || []);
-        // ✅ Safe array access
-        // setCategories(Array.isArray(catRes.data) ? catRes.data : []);
-        // setRestaurants(Array.isArray(restRes.data) ? restRes.data : []);
-        // setFoods(Array.isArray(foodRes.data) ? foodRes.data : []);
-        // Full safe version
         setCategories(
           Array.isArray(catRes.data?.categories) ? catRes.data.categories : []
         );
@@ -77,9 +51,6 @@ const Home: React.FC = () => {
       } finally {
         setLoading(false);
       }
-      // setRestaurants(
-      //   Array.isArray(restRes.data?.restaurants) ? restRes.data.restaurants : []
-      // );
     };
 
     fetchAll();
@@ -90,292 +61,244 @@ const Home: React.FC = () => {
       ? foods
       : foods.filter((f) => f.categoryId === selectedCategory);
 
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery("");
+  };
+
   if (loading) {
     return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center bg-gradient-to-br from-orange-50 via-pink-50 to-yellow-50">
-        <div className="w-16 h-16 border-4 border-orange-400 border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="text-gray-600">Loading delicious foods for you...</p>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-3 border-orange-500 border-t-transparent mx-auto mb-3"></div>
+          <p className="text-sm font-medium text-gray-600">
+            Loading delicious foods...
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-pink-50 to-yellow-50 pb-10">
-      {/* Hero */}
-      <section className="max-w-7xl mx-auto px-4 pt-10 pb-6">
-        <div className="grid md:grid-cols-2 gap-8 items-center">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/80 shadow-sm mb-3">
-              <Sparkles className="w-4 h-4 text-orange-500" />
-              <span className="text-xs font-medium text-gray-700">
-                Online Food Ordering...
-              </span>
-            </div>
-            <h1 className="text-3xl md:text-5xl font-extrabold text-gray-900 mb-3 leading-tight">
-              Order from your{" "}
-              <span className="bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
-                favourite restaurants
-              </span>{" "}
-              in minutes
-            </h1>
-            {/* <p className="text-gray-600 text-sm md:text-base mb-4 max-w-md">
-              All data coming directly from your Node.js + MongoDB backend:
-              restaurants, categories, foods and orders.
-            </p> */}
-          </div>
-
-          <div className="hidden md:flex items-center justify-center">
-            <div className="relative">
-              <div className="w-64 h-64 rounded-full bg-gradient-to-br from-orange-400 via-pink-500 to-yellow-400 blur-3xl opacity-60" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="bg-white/90 rounded-3xl shadow-2xl p-5 w-72">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-semibold text-gray-800">
-                      Today&apos;s Special
-                    </span>
-                    <UtensilsCrossed className="w-4 h-4 text-orange-500" />
-                  </div>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-700">Live orders</span>
-                      <span className="font-semibold text-orange-600">
-                        {foods.length}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-700">Restaurants</span>
-                      <span className="font-semibold text-pink-600">
-                        {restaurants.length}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-700">Categories</span>
-                      <span className="font-semibold text-yellow-600">
-                        {categories.length}
-                      </span>
-                    </div>
-                  </div>
-                  <p className="mt-3 text-xs text-gray-400">
-                    Powered by your custom APIs.
-                  </p>
-                </div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Mobile Header */}
+      <div className="sticky top-0 z-40 bg-white border-b border-gray-200 px-4 py-3">
+        <div className="flex items-center gap-3">
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">F</span>
+              </div>
+              <div>
+                <h1 className="text-lg font-bold text-gray-900">Food Mart</h1>
+                <p className="text-xs text-gray-500">
+                  Online Food Delivery App
+                </p>
               </div>
             </div>
           </div>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+              <span className="text-sm">👤</span>
+            </div>
+          </div>
         </div>
-      </section>
+      </div>
 
-      {/* Categories
-      <section className="max-w-7xl mx-auto px-4 py-4">
-        <h2 className="text-lg font-semibold text-gray-800 mb-3">
-          Browse by category
-        </h2>
-        <div className="flex gap-3 overflow-x-auto pb-2">
+      {/* Search Bar */}
+      <div className="p-4 bg-white border-b border-gray-200">
+        <form onSubmit={handleSearchSubmit} className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search for restaurants and food..."
+            className="w-full pl-10 pr-10 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-gray-50"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={handleClearSearch}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </form>
+      </div>
+
+      {/* Hero Banner - Mobile */}
+      <div className="p-4">
+        <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl p-4 text-white">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <Sparkles className="w-4 h-4" />
+                <span className="text-sm font-medium">Order Now</span>
+              </div>
+              <h2 className="text-xl font-bold">
+                Craving Something Delicious?
+              </h2>
+            </div>
+            <UtensilsCrossed className="w-6 h-6" />
+          </div>
+          <p className="text-sm opacity-90 mb-4">
+            Get food delivered in 30 minutes
+          </p>
+          <button
+            onClick={() => navigate("/restaurants")}
+            className="w-full bg-white text-orange-600 font-semibold py-2.5 rounded-lg text-sm hover:bg-gray-50 transition-colors"
+          >
+            Order Now
+          </button>
+        </div>
+      </div>
+
+      {/* Categories - Horizontal Scroll */}
+      <div className="px-4 py-3 bg-white">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-base font-bold text-gray-900">Categories</h3>
+          <Link
+            to="/categories"
+            className="text-xs text-orange-500 font-medium flex items-center gap-1"
+          >
+            View all <ChevronRight className="w-3 h-3" />
+          </Link>
+        </div>
+        <div className="flex gap-2 overflow-x-auto pb-2 -mb-2">
           <button
             onClick={() => setSelectedCategory("all")}
-            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap ${
+            className={`flex flex-col items-center p-2 rounded-xl min-w-[70px] ${
               selectedCategory === "all"
-                ? "bg-gradient-to-r from-orange-500 to-pink-500 text-white shadow-md"
-                : "bg-white/80 text-gray-700 shadow-sm"
+                ? "bg-orange-50 border border-orange-200"
+                : "bg-gray-50"
             }`}
           >
-            All
+            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-orange-400 to-red-400 flex items-center justify-center mb-1">
+              <span className="text-white text-lg">🍕</span>
+            </div>
+            <span className="text-xs font-medium text-gray-700 mt-1">All</span>
           </button>
-          {categories.map((cat) => (
+          {categories.slice(0, 8).map((cat) => (
             <button
               key={cat._id}
               onClick={() => setSelectedCategory(cat._id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap ${
+              className={`flex flex-col items-center p-2 rounded-xl min-w-[70px] ${
                 selectedCategory === cat._id
-                  ? "bg-gradient-to-r from-orange-500 to-pink-500 text-white shadow-md"
-                  : "bg-white/80 text-gray-700 shadow-sm hover:bg-white"
+                  ? "bg-orange-50 border border-orange-200"
+                  : "bg-gray-50"
               }`}
             >
-              <img
-                src={cat.imageUrl}
-                alt={cat.title}
-                className="w-6 h-6 rounded-full object-cover"
-              />
-              <span>{cat.title}</span>
-            </button>
-          ))}
-        </div>
-      </section> */}
-      {/* Categories - Clickable Links */}
-      <section className="max-w-7xl mx-auto px-4 py-8 bg-white/50 backdrop-blur-sm rounded-3xl shadow-xl my-8">
-        <h2 className="text-2xl font-bold mb-6 text-gray-800">
-          🍴 Browse by Category
-        </h2>
-        <div className="flex gap-3 overflow-x-auto pb-4 -mb-4 scrollbar-hide">
-          {/* All Button - Stays local filter */}
-          <button
-            onClick={() => setSelectedCategory("all")}
-            className={`flex items-center gap-3 px-6 py-3 rounded-2xl font-semibold whitespace-nowrap transition-all shadow-lg ${
-              selectedCategory === "all"
-                ? "bg-gradient-to-r from-orange-500 to-pink-500 text-white shadow-orange-500/50"
-                : "bg-white/80 hover:bg-white shadow-sm hover:shadow-md border hover:border-orange-200 text-gray-800"
-            }`}
-          >
-            <div className="w-3 h-10 bg-gradient-to-b from-orange-400 to-pink-400 rounded-full shadow-lg"></div>
-            <span>All</span>
-          </button>
-
-          {/* Category Links */}
-          {categories.slice(0, 8).map(
-            (
-              cat // Show top 8
-            ) => (
-              <Link
-                key={cat._id}
-                to={`/category/${cat._id}`} // ✅ Full page
-                className={`flex items-center gap-3 px-6 py-3 rounded-2xl font-semibold whitespace-nowrap transition-all shadow-lg hover:shadow-xl ${
-                  selectedCategory === cat._id
-                    ? "bg-gradient-to-r from-orange-500 to-pink-500 text-white shadow-orange-500/50"
-                    : "bg-white/80 hover:bg-white shadow-sm hover:shadow-md border hover:border-orange-200 text-gray-800"
-                }`}
-              >
+              <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center mb-1 overflow-hidden">
                 <img
                   src={
                     cat.imageUrl ||
-                    ` https://images.unsplash.com/photo-500x400/pizza.jpg}`
+                    "https://images.unsplash.com/photo-500x400/pizza.jpg"
                   }
                   alt={cat.title}
-                  className="w-10 h-10 rounded-xl object-cover shadow-md"
+                  className="w-full h-full object-cover"
                 />
-                <span className="text-sm">{cat.title}</span>
-              </Link>
-            )
-          )}
+              </div>
+              <span className="text-xs font-medium text-gray-700 mt-1 line-clamp-1">
+                {cat.title}
+              </span>
+            </button>
+          ))}
         </div>
+      </div>
 
-        {/* Show more */}
-        {categories.length > 8 && (
-          <div className="text-center mt-4">
-            <Link
-              to="/categories"
-              className="inline-flex items-center gap-2 text-orange-500 hover:text-orange-600 font-semibold text-lg"
-            >
-              See all categories <span>→</span>
-            </Link>
+      {/* Restaurants - Square Cards */}
+      <div className="p-4">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-lg font-bold text-gray-900">Top Restaurants</h3>
+            <p className="text-xs text-gray-500">
+              {restaurants.length} places near you
+            </p>
           </div>
-        )}
-      </section>
-
-      {/* Restaurants
-      <section className="max-w-7xl mx-auto px-4 py-4">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold text-gray-800">
-            Popular restaurants
-          </h2>
-        </div>
-        {restaurants.length === 0 ? (
-          <p className="text-sm text-gray-500">
-            No restaurants yet. Add from backend.
-          </p>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {restaurants.slice(0, 6).map((r) => (
-              <RestaurantCard key={r._id} restaurant={r} />
-            ))}
-          </div>
-        )}
-      </section> */}
-      {/* All Restaurants - Swiggy Style */}
-      <section className="max-w-7xl mx-auto px-4 py-12 bg-white/50 backdrop-blur-sm rounded-3xl shadow-2xl my-12">
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-            All Restaurants Near You
-          </h2>
           <Link
             to="/restaurants"
-            className="flex items-center gap-2 text-orange-500 hover:text-orange-600 font-semibold text-lg transition-colors"
+            className="text-sm text-orange-500 font-medium flex items-center gap-1"
           >
-            See All <span>→</span>
+            View all <ChevronRight className="w-3 h-3" />
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 gap-2">
           {restaurants.length === 0 ? (
-            <div className="col-span-full text-center py-20">
-              <div className="w-24 h-24 mx-auto mb-4 rounded-2xl bg-gradient-to-r from-orange-100 to-pink-100 flex items-center justify-center">
-                <span className="text-3xl">🏪</span>
+            <div className="col-span-2 text-center py-8 px-4 bg-white rounded-xl border border-gray-200">
+              <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-gray-100 flex items-center justify-center">
+                <span className="text-2xl">🏪</span>
               </div>
-              <p className="text-xl font-medium text-gray-500 mb-2">
+              <p className="text-sm font-medium text-gray-700 mb-1">
                 No restaurants yet
               </p>
-              <p className="text-sm text-gray-400">
-                Add restaurants from your admin panel
-              </p>
+              <p className="text-xs text-gray-500">Check back soon</p>
             </div>
           ) : (
-            restaurants.map((restaurant) => (
+            restaurants.slice(0, 6).map((restaurant) => (
               <Link
                 key={restaurant._id}
                 to={`/restaurant/${restaurant._id}`}
-                className="group block bg-white/70 backdrop-blur-sm rounded-3xl shadow-xl hover:shadow-2xl hover:-translate-y-3 transition-all overflow-hidden border hover:border-orange-200"
+                className="bg-white rounded-xl shadow-sm border border-gray-200 hover:border-orange-300 transition-colors overflow-hidden aspect-square flex flex-col"
               >
-                <div className="aspect-video overflow-hidden bg-gradient-to-br from-gray-50 to-orange-50 group-hover:from-orange-50">
+                {/* Square Image */}
+                <div className="relative flex-1 overflow-hidden bg-gradient-to-br from-gray-50 to-orange-50">
                   <img
                     src={restaurant.imageUrl}
                     alt={restaurant.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                    onError={(e) => {
-                      e.currentTarget.src = "/api/placeholder/400/300";
-                    }}
+                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                   />
-                </div>
-                <div className="p-6">
-                  <h3 className="font-bold text-xl mb-3 line-clamp-2 leading-tight group-hover:text-orange-700 transition-colors">
-                    {restaurant.title}
-                  </h3>
-
-                  {/* Rating */}
-                  <div className="flex items-center mb-3">
-                    <div className="flex text-sm text-yellow-500">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`w-4 h-4 ${
-                            i < Math.floor(restaurant.rating || 0)
-                              ? "fill-current"
-                              : ""
-                          }`}
-                        />
-                      ))}
-                    </div>
-                    <span className="ml-2 text-sm font-semibold text-gray-900">
-                      {restaurant.rating || 4.2} ({restaurant.ratingCount || 23}
-                      )
+                  <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-xs rounded-full px-2 py-1 flex items-center gap-0.5 shadow-xs">
+                    <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                    <span className="text-xs font-bold text-gray-900">
+                      {restaurant.rating || 4.2}
                     </span>
                   </div>
+                </div>
 
-                  {/* Location & Time */}
-                  <div className="space-y-1 text-sm text-gray-600 mb-4">
-                    <div className="flex items-center">
-                      <MapPin className="w-4 h-4 mr-2 text-gray-400" />
-                      <span>
-                        {restaurant.coords?.address?.slice(0, 40) || "Nearby"}
+                {/* Square Content */}
+                <div className="p-3 flex flex-col flex-1">
+                  <div className="mb-2">
+                    <h4 className="text-sm font-bold text-gray-900 line-clamp-2 leading-tight">
+                      {restaurant.title}
+                    </h4>
+                  </div>
+
+                  <div className="space-y-1 text-xs text-gray-600 mb-3">
+                    <div className="flex items-center gap-1">
+                      <MapPin className="w-3 h-3 flex-shrink-0" />
+                      <span className="line-clamp-1">
+                        {restaurant.coords?.address?.split(",")[0] || "Nearby"}
                       </span>
                     </div>
-                    <div className="flex items-center">
-                      <Clock className="w-4 h-4 mr-2 text-gray-400" />
-                      <span>{restaurant.time || "25-30 mins"}</span>
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-3 h-3 flex-shrink-0" />
+                      <span>{restaurant.time || "25-30 min"}</span>
                     </div>
                   </div>
 
-                  {/* Delivery */}
-                  <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                    <span className="font-bold text-lg text-orange-600">
-                      {restaurant.deliveryPrice || "₹25"} delivery
-                    </span>
-                    <div
-                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        restaurant.isOpen
-                          ? "bg-green-100 text-green-800"
-                          : "bg-gray-100 text-gray-600"
-                      }`}
-                    >
-                      {restaurant.isOpen ? "OPEN" : "CLOSED"}
+                  <div className="mt-auto pt-2 border-t border-gray-100">
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm font-bold text-gray-900">
+                        ₹{restaurant.deliveryPrice || 25}
+                      </div>
+                      <div
+                        className={`text-xs px-2 py-1 rounded ${
+                          restaurant.isOpen
+                            ? "bg-green-100 text-green-800"
+                            : "bg-gray-100 text-gray-600"
+                        }`}
+                      >
+                        {restaurant.isOpen ? "OPEN" : "CLOSED"}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -383,27 +306,374 @@ const Home: React.FC = () => {
             ))
           )}
         </div>
-      </section>
+      </div>
 
-      {/* Foods */}
-      <section className="max-w-7xl mx-auto px-4 py-4">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold text-gray-800">
-            {selectedCategory === "all" ? "All foods" : "Foods in category"}
-          </h2>
+      {/* Foods - Square Cards with See All Link */}
+      <div className="p-4">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-lg font-bold text-gray-900">
+              {selectedCategory === "all" ? "Popular Dishes" : "Menu Items"}
+            </h3>
+            <p className="text-xs text-gray-500">
+              {filteredFoods.length} items available
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Link
+              to="/all-foods"
+              className="text-sm text-orange-500 font-medium flex items-center gap-1"
+            >
+              See all <ChevronRight className="w-3 h-3" />
+            </Link>
+            <button className="flex items-center gap-1 px-3 py-1.5 bg-gray-100 text-gray-700 text-xs font-medium rounded-full">
+              <Filter className="w-3 h-3" />
+              Filter
+            </button>
+          </div>
         </div>
+
         {filteredFoods.length === 0 ? (
-          <p className="text-sm text-gray-500">
-            No foods found. Create foods in your backend.
-          </p>
+          <div className="text-center py-8 px-4 bg-white rounded-xl border border-gray-200">
+            <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-orange-100 flex items-center justify-center">
+              <span className="text-2xl">🍽️</span>
+            </div>
+            <p className="text-sm font-medium text-gray-700 mb-1">
+              No items found
+            </p>
+            <p className="text-xs text-gray-500">Try another category</p>
+          </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-            {filteredFoods.map((f) => (
-              <FoodCard key={f._id} food={f} onAddToCart={addToCart} />
+          <div className="grid grid-cols-2 gap-2">
+            {filteredFoods.slice(0, 8).map((food) => (
+              <Link
+                key={food._id}
+                to={`/food/${food._id}`}
+                className="bg-white rounded-xl shadow-sm border border-gray-200 hover:border-orange-300 transition-colors overflow-hidden aspect-square flex flex-col"
+              >
+                {/* Square Food Image */}
+                <div className="relative flex-1 overflow-hidden bg-gradient-to-br from-gray-50 to-orange-50">
+                  <img
+                    src={food.imageUrl}
+                    alt={food.title}
+                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                  />
+                </div>
+
+                {/* Square Food Content */}
+                <div className="p-3 flex flex-col flex-1">
+                  <div className="mb-2">
+                    <h4 className="text-sm font-bold text-gray-900 line-clamp-2 leading-tight">
+                      {food.title}
+                    </h4>
+                    <p className="text-xs text-gray-600 line-clamp-1 mt-1">
+                      {food.description}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-1 mb-3">
+                    <div className="flex text-yellow-400">
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} className="w-3 h-3 fill-current" />
+                      ))}
+                    </div>
+                    <span className="text-xs font-medium text-gray-900">
+                      {food.rating || 4.2}
+                    </span>
+                  </div>
+
+                  <div className="mt-auto pt-2 border-t border-gray-100">
+                    <div className="flex items-center justify-between">
+                      <div className="text-base font-bold text-gray-900">
+                        ₹{food.price}
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          addToCart(food);
+                        }}
+                        className="text-xs bg-gradient-to-r from-orange-500 to-red-500 text-white px-3 py-1.5 rounded-lg font-bold hover:shadow-sm transition-shadow"
+                      >
+                        ADD
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </Link>
             ))}
           </div>
         )}
-      </section>
+      </div>
+
+      {/* Quick Stats */}
+      <div className="p-4 bg-white border-t border-gray-200">
+        <div className="grid grid-cols-3 gap-3 text-center">
+          <div className="p-3 bg-orange-50 rounded-xl">
+            <div className="text-lg font-bold text-orange-600">
+              {foods.length}
+            </div>
+            <div className="text-xs text-gray-600">Food Items</div>
+          </div>
+          <div className="p-3 bg-red-50 rounded-xl">
+            <div className="text-lg font-bold text-red-600">
+              {restaurants.length}
+            </div>
+            <div className="text-xs text-gray-600">Restaurants</div>
+          </div>
+          <div className="p-3 bg-yellow-50 rounded-xl">
+            <div className="text-lg font-bold text-yellow-600">
+              {categories.length}
+            </div>
+            <div className="text-xs text-gray-600">Categories</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Bottom Info */}
+      <div className="p-4 text-center">
+        <p className="text-xs text-gray-500">
+          FoodApp • Order food from your favorite restaurants
+        </p>
+      </div>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white">
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          {/* Main Footer Content */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+            {/* Company */}
+            <div>
+              <h4 className="font-bold text-lg mb-4">FoodApp</h4>
+              <ul className="space-y-2 text-sm text-gray-300">
+                <li>
+                  <a
+                    href="#"
+                    className="hover:text-orange-400 transition-colors"
+                  >
+                    About Us
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="hover:text-orange-400 transition-colors"
+                  >
+                    Careers
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="hover:text-orange-400 transition-colors"
+                  >
+                    Team
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="hover:text-orange-400 transition-colors"
+                  >
+                    FoodApp One
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            {/* Contact */}
+            <div>
+              <h4 className="font-bold text-lg mb-4">Contact</h4>
+              <ul className="space-y-2 text-sm text-gray-300">
+                <li>
+                  <a
+                    href="#"
+                    className="hover:text-orange-400 transition-colors"
+                  >
+                    Help & Support
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="hover:text-orange-400 transition-colors"
+                  >
+                    Partner With Us
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="hover:text-orange-400 transition-colors"
+                  >
+                    Ride With Us
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="hover:text-orange-400 transition-colors"
+                  >
+                    Contact Us
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            {/* Legal */}
+            <div>
+              <h4 className="font-bold text-lg mb-4">Legal</h4>
+              <ul className="space-y-2 text-sm text-gray-300">
+                <li>
+                  <a
+                    href="#"
+                    className="hover:text-orange-400 transition-colors"
+                  >
+                    Terms & Conditions
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="hover:text-orange-400 transition-colors"
+                  >
+                    Cookie Policy
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="hover:text-orange-400 transition-colors"
+                  >
+                    Privacy Policy
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="hover:text-orange-400 transition-colors"
+                  >
+                    Investor Relations
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            {/* Cities */}
+            <div>
+              <h4 className="font-bold text-lg mb-4">We Deliver To</h4>
+              <ul className="space-y-2 text-sm text-gray-300">
+                <li>
+                  <a
+                    href="#"
+                    className="hover:text-orange-400 transition-colors"
+                  >
+                    Bangalore
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="hover:text-orange-400 transition-colors"
+                  >
+                    Delhi
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="hover:text-orange-400 transition-colors"
+                  >
+                    Mumbai
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="hover:text-orange-400 transition-colors"
+                  >
+                    View All Cities →
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Social Media & App Stores */}
+          <div className="border-t border-gray-800 pt-8">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+              {/* Social Media */}
+              <div className="flex items-center gap-4">
+                <span className="text-sm font-medium">Follow us on:</span>
+                <div className="flex gap-3">
+                  <a
+                    href="#"
+                    className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-orange-500 transition-colors"
+                  >
+                    <span className="text-lg">📘</span>
+                  </a>
+                  <a
+                    href="#"
+                    className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-orange-500 transition-colors"
+                  >
+                    <span className="text-lg">🐦</span>
+                  </a>
+                  <a
+                    href="#"
+                    className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-orange-500 transition-colors"
+                  >
+                    <span className="text-lg">📷</span>
+                  </a>
+                  <a
+                    href="#"
+                    className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-orange-500 transition-colors"
+                  >
+                    <span className="text-lg">▶️</span>
+                  </a>
+                </div>
+              </div>
+
+              {/* App Stores */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <a
+                  href="#"
+                  className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors"
+                >
+                  <div className="w-6 h-6 bg-white rounded flex items-center justify-center">
+                    <span className="text-black font-bold text-xs">A</span>
+                  </div>
+                  <div className="text-left">
+                    <div className="text-xs">Download on the</div>
+                    <div className="font-semibold">App Store</div>
+                  </div>
+                </a>
+                <a
+                  href="#"
+                  className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors"
+                >
+                  <div className="w-6 h-6 bg-white rounded flex items-center justify-center">
+                    <span className="text-black font-bold text-xs">P</span>
+                  </div>
+                  <div className="text-left">
+                    <div className="text-xs">Get it on</div>
+                    <div className="font-semibold">Google Play</div>
+                  </div>
+                </a>
+              </div>
+            </div>
+
+            {/* Copyright */}
+            <div className="mt-8 pt-6 border-t border-gray-800 text-center">
+              <p className="text-sm text-gray-400">
+                © 2024 FoodApp. All rights reserved.
+              </p>
+              <p className="text-xs text-gray-500 mt-2">
+                By continuing past this page, you agree to our Terms of Service,
+                Cookie Policy, Privacy Policy and Content Policies.
+              </p>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };

@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-
 import {
   ArrowLeft,
   Star,
@@ -8,6 +7,9 @@ import {
   Clock,
   MapPin,
   Flame,
+  ChevronRight,
+  Share2,
+  Heart,
 } from "lucide-react";
 import api from "../services/api";
 import { Food, Restaurant, CartItem } from "../types";
@@ -49,10 +51,12 @@ const FoodDetailPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-20 bg-gradient-to-br from-orange-50 to-pink-50">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
-          <p>Loading food details...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-3 border-orange-500 border-t-transparent mx-auto mb-3"></div>
+          <p className="text-sm font-medium text-gray-600">
+            Loading food details...
+          </p>
         </div>
       </div>
     );
@@ -60,11 +64,20 @@ const FoodDetailPage = () => {
 
   if (!food) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-20">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">Food not found</h2>
-          <Link to="/" className="text-orange-500 hover:underline">
-            ← Back to Home
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+        <div className="text-center bg-white p-6 rounded-xl border border-gray-200">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
+            <span className="text-2xl">🚫</span>
+          </div>
+          <h2 className="text-lg font-bold text-gray-900 mb-2">
+            Food not found
+          </h2>
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1 text-sm text-orange-500 hover:text-red-500 font-medium"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Home
           </Link>
         </div>
       </div>
@@ -72,214 +85,218 @@ const FoodDetailPage = () => {
   }
 
   return (
-    <div className="pt-20 min-h-screen bg-gradient-to-br from-orange-50 via-pink-50 to-yellow-50">
-      {/* Header */}
-      <div className="bg-white shadow-xl">
-        <div className="max-w-6xl mx-auto px-4 py-6">
+    <div className="min-h-screen bg-gray-50">
+      {/* Mobile Header */}
+      <div className="sticky top-0 z-40 bg-white border-b border-gray-200">
+        <div className="flex items-center justify-between px-4 py-3">
+          <Link to="/" className="text-gray-700 hover:text-orange-500 p-1">
+            <ArrowLeft className="w-5 h-5" />
+          </Link>
+          <div className="text-center flex-1">
+            <h1 className="text-sm font-bold text-gray-900 line-clamp-1">
+              Food Details
+            </h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <button className="p-1.5">
+              <Share2 className="w-5 h-5 text-gray-600" />
+            </button>
+            <button className="p-1.5">
+              <Heart className="w-5 h-5 text-gray-600" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Food Image */}
+      <div className="relative">
+        <img
+          src={
+            food.imageUrl ||
+            "https://images.unsplash.com/photo-500x400/biryani.jpg"
+          }
+          alt={food.title}
+          className="w-full h-64 object-cover"
+        />
+        <div className="absolute top-4 right-4 flex gap-2">
+          {food.foodTags &&
+            food.foodTags.slice(0, 2).map((tag, i) => (
+              <span
+                key={i}
+                className="bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs font-bold shadow-sm"
+              >
+                {tag}
+              </span>
+            ))}
+        </div>
+      </div>
+
+      {/* Food Details */}
+      <div className="p-4 bg-white">
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex-1">
+            <h1 className="text-xl font-bold text-gray-900 mb-1">
+              {food.title}
+            </h1>
+            <div className="flex items-center gap-3 text-sm text-gray-600 mb-2">
+              <div className="flex items-center gap-1">
+                <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                <span className="font-medium">{food.rating || 4.2}</span>
+                <span className="text-gray-500">({food.rating || "50+"})</span>
+              </div>
+              <span>•</span>
+              <span>{food.categoryId || "Main Course"}</span>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-2xl font-bold text-gray-900">
+              ₹{food.price}
+            </div>
+            <div className="text-xs text-gray-500 line-through">
+              ₹{Math.round(food.price * 1.2)}
+            </div>
+            <div className="text-xs text-green-600 font-bold">20% OFF</div>
+          </div>
+        </div>
+
+        <p className="text-sm text-gray-600 leading-relaxed mb-4">
+          {food.description}
+        </p>
+
+        {/* Quantity Selector */}
+        <div className="flex items-center justify-between mb-6 p-3 bg-gray-50 rounded-lg">
+          <span className="text-sm font-medium text-gray-700">Quantity</span>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setQuantity(Math.max(1, quantity - 1))}
+              className="w-8 h-8 flex items-center justify-center bg-white border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50"
+            >
+              -
+            </button>
+            <span className="text-lg font-bold w-8 text-center">
+              {quantity}
+            </span>
+            <button
+              onClick={() => setQuantity(quantity + 1)}
+              className="w-8 h-8 flex items-center justify-center bg-white border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50"
+            >
+              +
+            </button>
+          </div>
+        </div>
+
+        {/* Restaurant Info - Square Card */}
+        {restaurant && (
+          <Link
+            to={`/restaurant/${restaurant._id}`}
+            className="block bg-white border border-gray-200 rounded-xl p-3 mb-4 hover:border-orange-300 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-gray-100 to-orange-50 overflow-hidden flex-shrink-0">
+                <img
+                  src={
+                    restaurant.logoUrl ||
+                    "https://via.placeholder.com/56x56/FF6B35/FFFFFF?text=🍔"
+                  }
+                  alt={restaurant.title}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between mb-1">
+                  <h3 className="text-sm font-bold text-gray-900 line-clamp-1">
+                    {restaurant.title}
+                  </h3>
+                  <ChevronRight className="w-4 h-4 text-gray-400" />
+                </div>
+                <div className="flex items-center gap-2 text-xs text-gray-600 mb-1">
+                  <div className="flex items-center gap-0.5">
+                    <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                    <span>{restaurant.rating || 4.2}</span>
+                  </div>
+                  <span>•</span>
+                  <div className="flex items-center gap-0.5">
+                    <Clock className="w-3 h-3" />
+                    <span>{restaurant.time || "25-30 min"}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 text-xs text-gray-600">
+                  <MapPin className="w-3 h-3" />
+                  <span className="line-clamp-1">
+                    {restaurant.coords?.address?.split(",")[0] || "Nearby"}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </Link>
+        )}
+      </div>
+
+      {/* Related Foods - Square Cards Grid */}
+      <div className="p-4 bg-white">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold text-gray-900">
+            You might also like
+          </h2>
           <Link
             to="/"
-            className="inline-flex items-center gap-2 text-gray-700 hover:text-orange-500 mb-6 p-2 rounded-xl hover:bg-gray-50 transition-all"
+            className="text-sm text-orange-500 font-medium flex items-center gap-1"
           >
-            <ArrowLeft className="w-5 h-5" />
-            Back to Home
+            View all <ChevronRight className="w-3 h-3" />
           </Link>
         </div>
-      </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-12">
-        <div className="grid lg:grid-cols-2 gap-12 items-start">
-          {/* Food Image + Add to Cart */}
-          <div className="space-y-6">
-            <div className="relative group">
-              <img
-                src={
-                  food.imageUrl ||
-                  "https://images.unsplash.com/photo-500x400/biryani.jpg"
-                }
-                onError={(e) => console.log("Image fail:", food.imageUrl)}
-                alt={food.title}
-                className="w-full h-96 lg:h-[500px] object-cover rounded-3xl shadow-2xl group-hover:scale-105 transition-transform"
-              />
-              {food.foodTags && food.foodTags.length > 0 && (
-                <div className="absolute top-6 left-6 space-x-2">
-                  {food.foodTags.slice(0, 3).map((tag, i) => (
-                    <span
-                      key={i}
-                      className="inline-flex items-center gap-1 bg-white/90 px-3 py-1 rounded-full text-sm font-semibold shadow-md backdrop-blur-sm"
-                    >
-                      <Flame className="w-3 h-3 text-orange-500 fill-current" />
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Add to Cart */}
-            <div className="bg-white/70 backdrop-blur-sm p-8 rounded-3xl shadow-xl sticky top-24">
-              <div className="flex items-center justify-between mb-6">
-                <h1 className="text-3xl font-bold text-gray-900">
-                  {food.title}
-                </h1>
-                <div className="flex items-center gap-1 text-yellow-500">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`w-6 h-6 ${
-                        i < Math.floor(food.rating || 4.2) ? "fill-current" : ""
-                      }`}
-                    />
-                  ))}
-                  <span className="ml-2 font-bold text-lg">
-                    {food.rating || 4.2}
-                  </span>
-                </div>
+        <div className="grid grid-cols-2 gap-3">
+          {/* Sample Related Food Cards */}
+          {[1, 2, 3, 4].map((item) => (
+            <div
+              key={item}
+              className="bg-gray-50 border border-gray-200 rounded-xl overflow-hidden aspect-square flex flex-col"
+            >
+              <div className="flex-1 overflow-hidden bg-gradient-to-br from-gray-100 to-orange-50">
+                <img
+                  src="https://via.placeholder.com/200x200/FF6B35/FFFFFF?text=Food"
+                  alt="Related food"
+                  className="w-full h-full object-cover"
+                />
               </div>
-
-              <div className="space-y-4 mb-8">
-                <div className="flex items-baseline">
-                  <span className="text-4xl font-bold text-orange-600">
-                    ₹{food.price}
-                  </span>
-                  <span className="text-sm text-gray-500 ml-4 line-through">
-                    ₹{Math.round(food.price * 1.2)}
-                  </span>
-                  <span className="ml-4 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-semibold">
-                    20% OFF
-                  </span>
-                </div>
-
-                <p className="text-gray-700 leading-relaxed">
-                  {food.description}
-                </p>
-              </div>
-
-              {/* Quantity + Add */}
-              <div className="flex items-center gap-4 mb-6">
-                <div className="flex items-center border border-gray-200 rounded-2xl p-1">
-                  <button
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="w-12 h-12 flex items-center justify-center text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded-xl transition-all"
-                  >
-                    -
-                  </button>
-                  <span className="w-16 text-center text-xl font-bold px-4">
-                    {quantity}
-                  </span>
-                  <button
-                    onClick={() => setQuantity(quantity + 1)}
-                    className="w-12 h-12 flex items-center justify-center text-gray-500 hover:text-orange-500 hover:bg-orange-50 rounded-xl transition-all"
-                  >
-                    +
+              <div className="p-3">
+                <h4 className="text-sm font-bold text-gray-900 line-clamp-1 mb-1">
+                  Similar Dish
+                </h4>
+                <div className="flex items-center justify-between">
+                  <div className="text-base font-bold text-gray-900">₹220</div>
+                  <button className="text-xs bg-orange-500 text-white px-2.5 py-1 rounded-lg font-bold">
+                    ADD
                   </button>
                 </div>
               </div>
-
-              <button
-                // onClick={() => addToCart({ ...food, quantity })}
-                onClick={() => addToCart({ ...food, quantity } as CartItem)}
-                className="w-full bg-gradient-to-r from-orange-500 via-pink-500 to-yellow-500 text-white py-4 px-8 rounded-3xl text-xl font-bold shadow-2xl hover:shadow-orange-500/50 hover:scale-[1.02] transition-all flex items-center justify-center gap-3"
-              >
-                <ShoppingCart className="w-6 h-6" />
-                Add to Cart • ₹{food.price * quantity}
-              </button>
             </div>
-          </div>
-
-          {/* Restaurant Info + Related */}
-          <div className="space-y-8 lg:sticky lg:top-32 self-start">
-            {/* Restaurant Info */}
-            {restaurant && (
-              <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-8 shadow-xl border">
-                <div className="flex items-start gap-4 mb-6">
-                  <img
-                    src={
-                      restaurant.logoUrl ||
-                      "https://via.placeholder.com/80x80/FF6B35/FFFFFF?text=🍔"
-                    }
-                    alt={restaurant.title}
-                    className="w-20 h-20 rounded-2xl object-cover shadow-lg"
-                  />
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-1">
-                      {restaurant.title}
-                    </h3>
-                    <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
-                      <div className="flex items-center gap-1">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className="w-4 h-4 text-yellow-400 fill-current"
-                          />
-                        ))}
-                        <span>
-                          {restaurant.rating} ({restaurant.ratingCount})
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-4 h-4" />
-                        <span>{restaurant.time}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <MapPin className="w-4 h-4" />
-                      <span>{restaurant.coords?.address}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <Link
-                    to={`/restaurant/${restaurant._id}`}
-                    className="flex-1 bg-gradient-to-r from-orange-500 to-pink-500 text-white py-3 px-6 rounded-2xl text-center font-semibold hover:shadow-xl transition-all"
-                  >
-                    Full Menu
-                  </Link>
-                  <button className="px-6 py-3 border border-gray-300 rounded-2xl hover:bg-gray-50 transition-all font-semibold">
-                    Directions
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Related Foods */}
-            <div>
-              <h4 className="text-xl font-bold mb-6 text-gray-900">
-                You might also like
-              </h4>
-              <div className="space-y-4">
-                {/* Add 3-4 similar foods here */}
-                <div className="flex gap-4 p-4 hover:bg-gray-50 rounded-2xl cursor-pointer group">
-                  <img
-                    src="https://via.placeholder.com/80x80/FF6B35/FFFFFF?text=Similar"
-                    className="w-20 h-20 rounded-xl object-cover flex-shrink-0"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <h5 className="font-bold text-lg group-hover:text-orange-600">
-                      Similar Dish
-                    </h5>
-                    <p className="text-sm text-gray-600 line-clamp-1">
-                      Description
-                    </p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-orange-600 font-bold text-lg">
-                        ₹220
-                      </span>
-                      <div className="flex text-yellow-500">
-                        <Star className="w-4 h-4 fill-current" />
-                        <Star className="w-4 h-4 fill-current" />
-                        <Star className="w-4 h-4 fill-current" />
-                        <Star className="w-4 h-4" />
-                        <Star className="w-4 h-4" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
+
+      {/* Fixed Bottom Add to Cart */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-sm text-gray-600">Total</div>
+            <div className="text-xl font-bold text-gray-900">
+              ₹{food.price * quantity}
+            </div>
+          </div>
+          <button
+            onClick={() => addToCart({ ...food, quantity } as CartItem)}
+            className="flex-1 ml-4 bg-gradient-to-r from-orange-500 to-red-500 text-white py-3 px-6 rounded-xl font-bold text-sm hover:shadow-lg transition-shadow flex items-center justify-center gap-2"
+          >
+            <ShoppingCart className="w-4 h-4" />
+            ADD TO CART
+          </button>
+        </div>
+      </div>
+
+      {/* Spacing for fixed bottom bar */}
+      <div className="h-20"></div>
     </div>
   );
 };

@@ -22,7 +22,7 @@ const Header = () => {
           </Link>
 
           {/* Search */}
-          <div className="flex-1 max-w-md mx-8 hidden md:flex">
+          {/* <div className="flex-1 max-w-md mx-8 hidden md:flex">
             <div className="relative w-full">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
@@ -33,7 +33,7 @@ const Header = () => {
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-          </div>
+          </div> */}
 
           {/* Right side */}
           <div className="flex items-center space-x-4">

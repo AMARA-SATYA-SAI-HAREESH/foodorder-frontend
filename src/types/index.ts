@@ -31,6 +31,9 @@ export interface Restaurant {
   coords: RestaurantCoords;
   createdAt?: string;
   updatedAt?: string;
+  name: string;
+  address: string;
+  deliveryTime?: string;
 }
 
 // Food (foodModel.js)

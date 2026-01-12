@@ -2,49 +2,136 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  * {
-    @apply border-gray-300;
+/* Hide scrollbar */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Rest of your CSS from previous message... */
+.categories-scroll {
+  @apply flex gap-2 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide;
+}
+
+/* Continue with all other styles */
+/* ULTRA-SMALL MOBILE SQUARES */
+@media (max-width: 768px) {
+  .food-grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 0.25rem !important; /* Micro gap */
+    padding: 0.25rem !important;
   }
 
-  html {
-    scroll-behavior: smooth;
-    font-feature-settings: "rlig" 1, "calt" 1;
+  .food-card {
+    height: 110px !important; /* Tiny square */
+    padding: 0.25rem !important; /* No padding */
+    border-radius: 0.5rem !important;
+    gap: 0 !important;
   }
 
+  .food-card img {
+    height: 50px !important; /* Micro image */
+    width: 100%;
+    border-radius: 0.375rem;
+    margin-bottom: 0.125rem;
+  }
+
+  .food-card h3 {
+    font-size: 9px !important; /* Nano text */
+    line-height: 1 !important;
+    margin: 0 !important;
+    padding: 0 0.125rem !important;
+    height: 18px;
+    overflow: hidden;
+  }
+
+  .food-card .price {
+    font-size: 11px !important; /* Tiny price */
+    font-weight: 800;
+  }
+
+  .food-card button {
+    padding: 0.125rem 0.375rem !important; /* Micro button */
+    font-size: 8px !important;
+    border-radius: 0.25rem;
+    min-height: 18px;
+    margin-top: auto;
+  }
+}
+/* SCALE APPROACH - Same layout, different size */
+
+/* Mobile: Scale DOWN everything 70% */
+@media (max-width: 768px) {
   body {
-    @apply bg-gradient-to-br from-dark-900 via-primary-900/20 to-accent-500/10 min-h-screen antialiased;
-    backdrop-filter: blur(20px);
+    font-size: 14px;
+  }
+
+  .food-grid {
+    grid-template-columns: repeat(2, 1fr); /* SAME 2 cols */
+    gap: 0.75rem;
+    padding: 0.5rem;
+  }
+
+  .food-card {
+    height: 160px; /* Proportional height */
+    padding: 0.75rem; /* Proportional padding */
+    border-radius: 0.75rem;
+  }
+
+  .food-card img {
+    height: 80px; /* Proportional image */
+  }
+
+  .food-card h3 {
+    font-size: 13px; /* Proportional text */
+    line-height: 1.2;
+  }
+
+  .food-card .price {
+    font-size: 16px; /* Proportional price */
+  }
+
+  .food-card button {
+    font-size: 12px;
+    padding: 0.5rem 0.75rem;
   }
 }
 
-@layer components {
-  /* Glass Cards */
-  .glass-card {
-    @apply bg-white/5 backdrop-blur-3xl border border-white/10 shadow-glow-lg rounded-3xl p-8 hover:shadow-glow hover:border-primary-600/50 transition-all duration-500 ease-out;
+/* Desktop: Scale UP everything 150% */
+@media (min-width: 769px) {
+  body {
+    font-size: 18px;
   }
 
-  /* Neumorphic Elements */
-  .neumo-btn {
-    @apply relative overflow-hidden bg-gradient-to-r from-primary-600 to-accent-600 text-white px-8 py-4 rounded-2xl font-semibold text-lg tracking-wide shadow-glow hover:shadow-glow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 group;
+  .food-grid {
+    grid-template-columns: repeat(2, 1fr); /* SAME 2 cols, NOT 4 */
+    gap: 1.5rem;
+    padding: 2rem;
   }
 
-  .neumo-card {
-    @apply bg-gradient-to-br from-slate-800/80 to-gray-900/80 backdrop-blur-xl border border-slate-700/50 shadow-neumo hover:shadow-glow hover:border-primary-500/70 rounded-3xl p-8 transition-all duration-500;
+  .food-card {
+    height: 240px; /* 1.5x scale */
+    padding: 1.5rem;
+    border-radius: 1rem;
   }
 
-  /* Pro Typography */
-  .hero-title {
-    @apply text-5xl md:text-7xl font-black bg-gradient-to-r from-white via-slate-100 to-primary-400 bg-clip-text text-transparent leading-[0.9] tracking-[-0.05em] mb-6;
+  .food-card img {
+    height: 120px; /* 1.5x scale */
   }
 
-  .section-title {
-    @apply text-3xl md:text-4xl font-black bg-gradient-to-r from-slate-100 to-primary-300 bg-clip-text text-transparent tracking-tight mb-12;
+  .food-card h3 {
+    font-size: 18px; /* 1.5x scale */
   }
-}
 
-@layer utilities {
-  .text-glow {
-    text-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+  .food-card .price {
+    font-size: 24px; /* 1.5x scale */
+  }
+
+  .food-card button {
+    font-size: 16px;
+    padding: 1rem 1.5rem;
   }
 }

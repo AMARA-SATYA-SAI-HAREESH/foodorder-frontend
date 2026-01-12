@@ -1,6 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Star, Clock, MapPin, ShoppingCart } from "lucide-react";
+import {
+  ArrowLeft,
+  Star,
+  Clock,
+  MapPin,
+  ShoppingCart,
+  Filter,
+  ChevronRight,
+} from "lucide-react";
 import api from "../services/api";
 import { Restaurant, Food } from "../types";
 import { useCart } from "../context/CartContext";
@@ -21,7 +29,6 @@ const RestaurantPage = () => {
         console.log("Restaurant:", restRes.data);
         setRestaurant(restRes.data.restaurant);
 
-        // ✅ Fixed param name
         const foodsRes = await api.get(
           `/api/food/getFoodsbyrestaurant?id=${id}`
         );
@@ -39,10 +46,10 @@ const RestaurantPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-20">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
-          <p>Loading restaurant menu...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-3 border-orange-500 border-t-transparent mx-auto mb-3"></div>
+          <p className="text-sm font-medium text-gray-600">Loading menu...</p>
         </div>
       </div>
     );
@@ -50,13 +57,20 @@ const RestaurantPage = () => {
 
   if (!restaurant) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-20">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+        <div className="text-center bg-white p-6 rounded-xl border border-gray-200">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
+            <span className="text-2xl">🚫</span>
+          </div>
+          <h2 className="text-lg font-bold text-gray-900 mb-2">
             Restaurant not found
           </h2>
-          <Link to="/" className="text-orange-500 hover:underline">
-            ← Back to Home
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1 text-sm text-orange-500 hover:text-red-500 font-medium"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Home
           </Link>
         </div>
       </div>
@@ -64,131 +78,193 @@ const RestaurantPage = () => {
   }
 
   return (
-    <div className="pt-20 min-h-screen bg-gradient-to-br from-orange-50 via-pink-50">
-      {/* Restaurant Header */}
-      <div className="bg-gradient-to-r from-orange-500 to-pink-500 text-white py-8 px-4">
-        <div className="max-w-7xl mx-auto flex items-start gap-6">
-          <Link
-            to="/"
-            className="p-2 bg-white/20 rounded-xl hover:bg-white/30 transition-all"
-          >
-            <ArrowLeft className="w-6 h-6" />
+    <div className="min-h-screen bg-gray-50">
+      {/* Mobile Header */}
+      <div className="sticky top-0 z-40 bg-white border-b border-gray-200">
+        <div className="flex items-center justify-between px-4 py-3">
+          <Link to="/" className="text-gray-700 hover:text-orange-500 p-1">
+            <ArrowLeft className="w-5 h-5" />
           </Link>
-
-          <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Info */}
-            <div className="lg:col-span-2">
-              <h1 className="text-4xl font-bold mb-4">{restaurant.title}</h1>
-              <div className="flex items-center gap-4 text-lg mb-6">
-                <div className="flex items-center gap-1">
-                  <div className="flex">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className="w-6 h-6 text-yellow-300 fill-current"
-                      />
-                    ))}
-                  </div>
-                  <span className="font-bold">{restaurant.rating || 4.5}</span>
-                </div>
-                <span>•</span>
-                <span className="flex items-center gap-1">
-                  <Clock className="w-5 h-5" />
-                  {restaurant.time || "25-30 min"}
+          <div className="text-center flex-1">
+            <h1 className="text-sm font-bold text-gray-900 line-clamp-1">
+              {restaurant.title}
+            </h1>
+            <div className="flex items-center justify-center gap-2 mt-1">
+              <div className="flex items-center gap-1">
+                <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                <span className="text-xs font-medium">
+                  {restaurant.rating || 4.5}
                 </span>
               </div>
+              <span className="text-xs text-gray-500">•</span>
+              <span className="text-xs text-gray-500">
+                {restaurant.time || "25-30 min"}
+              </span>
+            </div>
+          </div>
+          <button className="p-1.5">
+            <Filter className="w-5 h-5 text-gray-600" />
+          </button>
+        </div>
+      </div>
 
-              {/* Location */}
-              <div className="flex items-center gap-2 bg-white/20 p-3 rounded-xl mb-6">
-                <MapPin className="w-5 h-5" />
-                <span>{restaurant.coords?.address || "Near you"}</span>
+      {/* Restaurant Banner */}
+      <div className="relative h-48 overflow-hidden bg-gradient-to-br from-orange-100 to-red-100">
+        <img
+          src={restaurant.imageUrl}
+          alt={restaurant.title}
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
+          <div className="flex items-center justify-between">
+            <div className="text-white">
+              <div className="flex items-center gap-2 mb-1">
+                <div
+                  className={`w-2 h-2 rounded-full ${
+                    restaurant.isOpen ? "bg-green-400" : "bg-red-400"
+                  }`}
+                ></div>
+                <span className="text-sm font-medium">
+                  {restaurant.isOpen ? "OPEN NOW" : "CLOSED"}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-xs">
+                <MapPin className="w-3 h-3" />
+                <span className="line-clamp-1">
+                  {restaurant.coords?.address?.split(",")[0] || "Nearby"}
+                </span>
               </div>
             </div>
-
-            {/* Order Info */}
-            <div className="bg-white/20 p-6 rounded-2xl backdrop-blur-sm">
-              <div className="text-center">
-                <div className="text-3xl font-bold mb-2">₹25</div>
-                <div className="text-lg mb-4">Delivery</div>
-                <div
-                  className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                    restaurant.isOpen
-                      ? "bg-green-100/50 text-green-800 border border-green-200"
-                      : "bg-gray-100/50 text-gray-600 border border-gray-200"
-                  }`}
-                >
-                  {restaurant.isOpen ? "OPEN NOW" : "CLOSED"}
-                </div>
+            <div className="text-right text-white">
+              <div className="text-lg font-bold">
+                ₹{restaurant.deliveryPrice || 25}
               </div>
+              <div className="text-xs">Delivery</div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Menu Foods */}
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        <h2 className="text-3xl font-bold mb-8">Menu ({foods.length} items)</h2>
-
-        {foods.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="w-24 h-24 mx-auto mb-6 p-6 bg-gray-100 rounded-3xl">
-              <ShoppingCart className="w-12 h-12 mx-auto text-gray-400" />
+      {/* Quick Info Cards */}
+      <div className="p-4 bg-white border-b border-gray-200">
+        <div className="grid grid-cols-3 gap-3">
+          <div className="text-center p-3 bg-gray-50 rounded-lg">
+            <div className="text-lg font-bold text-gray-900">
+              {foods.length}
             </div>
-            <h3 className="text-2xl font-bold text-gray-800 mb-2">
-              No menu items yet
+            <div className="text-xs text-gray-600">Items</div>
+          </div>
+          <div className="text-center p-3 bg-gray-50 rounded-lg">
+            <div className="text-lg font-bold text-gray-900">₹199</div>
+            <div className="text-xs text-gray-600">Min Order</div>
+          </div>
+          <div className="text-center p-3 bg-gray-50 rounded-lg">
+            <div className="text-lg font-bold text-gray-900">25-30</div>
+            <div className="text-xs text-gray-600">Minutes</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Menu Header */}
+      <div className="p-4 bg-white border-b border-gray-200">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h2 className="text-lg font-bold text-gray-900">Menu</h2>
+            <p className="text-xs text-gray-500">
+              {foods.length} items available
+            </p>
+          </div>
+          <button className="flex items-center gap-1 px-3 py-1.5 bg-gray-100 text-gray-700 text-xs font-medium rounded-full">
+            <Filter className="w-3 h-3" />
+            Filter
+          </button>
+        </div>
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          <button className="px-3 py-1.5 bg-orange-500 text-white text-xs font-medium rounded-full whitespace-nowrap">
+            All
+          </button>
+          <button className="px-3 py-1.5 bg-gray-100 text-gray-700 text-xs font-medium rounded-full whitespace-nowrap">
+            Recommended
+          </button>
+          <button className="px-3 py-1.5 bg-gray-100 text-gray-700 text-xs font-medium rounded-full whitespace-nowrap">
+            Popular
+          </button>
+          <button className="px-3 py-1.5 bg-gray-100 text-gray-700 text-xs font-medium rounded-full whitespace-nowrap">
+            Veg Only
+          </button>
+        </div>
+      </div>
+
+      {/* Menu Items - Square Cards Grid */}
+      <div className="p-3">
+        {foods.length === 0 ? (
+          <div className="text-center py-12 px-4 bg-white rounded-xl border border-gray-200">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-orange-100 flex items-center justify-center">
+              <ShoppingCart className="w-8 h-8 text-orange-500" />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">
+              No menu items
             </h3>
-            <p className="text-gray-600 mb-6">
-              This restaurant hasn't added foods
+            <p className="text-sm text-gray-600 mb-4">
+              This restaurant hasn't added items yet
             </p>
             <Link
               to="/"
-              className="inline-flex items-center gap-2 bg-orange-500 text-white px-6 py-3 rounded-2xl hover:bg-orange-600"
+              className="inline-flex items-center gap-1 text-sm bg-orange-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-orange-600 transition-colors"
             >
-              ← Explore Other Restaurants
+              <ArrowLeft className="w-4 h-4" />
+              Explore Restaurants
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
+          <div className="grid grid-cols-2 gap-3">
             {foods.map((food) => (
               <div
                 key={food._id}
-                className="group bg-white rounded-3xl shadow-xl hover:shadow-2xl p-6 border hover:border-orange-200 transition-all overflow-hidden"
+                className="bg-white rounded-xl shadow-sm border border-gray-200 hover:border-orange-300 transition-colors overflow-hidden aspect-square flex flex-col"
               >
-                <img
-                  src={food.imageUrl}
-                  alt={food.title}
-                  className="w-full h-48 object-cover rounded-2xl mb-4 group-hover:scale-105 transition-transform"
-                />
-                <div className="space-y-3">
-                  <h3 className="font-bold text-xl line-clamp-2">
-                    {food.title}
-                  </h3>
-                  <p className="text-gray-600 line-clamp-2">
-                    {food.description}
-                  </p>
-
-                  <div className="flex items-center justify-between pt-3 border-t">
-                    <div className="flex items-center gap-2">
-                      <div className="flex text-yellow-400">
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} className="w-4 h-4 fill-current" />
-                        ))}
-                      </div>
-                      <span className="text-sm font-medium">
+                {/* Square Food Image */}
+                <div className="relative flex-1 overflow-hidden bg-gradient-to-br from-gray-50 to-orange-50">
+                  <img
+                    src={food.imageUrl}
+                    alt={food.title}
+                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                  />
+                  <div className="absolute top-2 right-2">
+                    <div className="flex items-center gap-0.5 bg-white/90 backdrop-blur-xs rounded-full px-2 py-1">
+                      <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                      <span className="text-xs font-bold">
                         {food.rating || 4.2}
                       </span>
                     </div>
+                  </div>
+                </div>
 
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl font-bold text-orange-600">
+                {/* Square Food Content */}
+                <div className="p-3 flex flex-col flex-1">
+                  <div className="mb-2">
+                    <h3 className="text-sm font-bold text-gray-900 line-clamp-2 leading-tight">
+                      {food.title}
+                    </h3>
+                  </div>
+
+                  <div className="flex-1 min-h-0">
+                    <p className="text-xs text-gray-600 line-clamp-2">
+                      {food.description}
+                    </p>
+                  </div>
+
+                  <div className="mt-auto pt-2 border-t border-gray-100">
+                    <div className="flex items-center justify-between">
+                      <div className="text-base font-bold text-gray-900">
                         ₹{food.price}
-                      </span>
+                      </div>
                       <button
                         onClick={() => addToCart(food)}
-                        className="bg-gradient-to-r from-orange-500 to-pink-500 text-white px-8 py-3 rounded-2xl font-semibold hover:shadow-lg hover:scale-105 transition-all flex items-center gap-2"
+                        className="text-xs bg-gradient-to-r from-orange-500 to-red-500 text-white px-3 py-1.5 rounded-lg font-bold hover:shadow-sm transition-shadow flex items-center gap-1"
                       >
-                        <ShoppingCart className="w-5 h-5" />
-                        Add
+                        <ShoppingCart className="w-3 h-3" />
+                        ADD
                       </button>
                     </div>
                   </div>
@@ -198,6 +274,29 @@ const RestaurantPage = () => {
           </div>
         )}
       </div>
+
+      {/* Fixed Bottom Cart Summary */}
+      {foods.length > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-sm text-gray-600">
+                Viewing {foods.length} items
+              </div>
+              <div className="text-xs text-gray-500">Add items to cart</div>
+            </div>
+            <Link
+              to="/cart"
+              className="flex items-center gap-2 text-sm text-orange-500 hover:text-red-500 font-medium"
+            >
+              View Cart <ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* Spacing for fixed bottom bar */}
+      <div className="h-20"></div>
     </div>
   );
 };
