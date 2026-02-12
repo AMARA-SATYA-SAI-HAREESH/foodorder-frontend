@@ -33,6 +33,9 @@ import {
   deleteUser,
   createUser,
   updateUser,
+  getAllDrivers,
+  deleteDriver,
+  updateDriverVerification,
 } from "./adminApi";
 
 interface Category {
@@ -71,10 +74,27 @@ interface Order {
   user?: any;
   items: Array<any>;
 }
-
+interface Driver {
+  _id: string;
+  vehicleNumber: string;
+  vehicleType: string;
+  licenseNumber: string;
+  isOnline: boolean;
+  isAvailable: boolean;
+  verificationStatus: string;
+  rating?: number;
+  totalDeliveries: number;
+  totalEarnings: number;
+  currentOrder?: string;
+  user?: {
+    userName: string;
+    email: string;
+    phone: string;
+  };
+}
 const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
-    "categories" | "foods" | "restaurants" | "orders" | "users"
+    "categories" | "foods" | "restaurants" | "orders" | "users" | "drivers"
   >("categories");
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState({
@@ -83,6 +103,7 @@ const AdminDashboard: React.FC = () => {
     restaurants: [] as Restaurant[],
     orders: [] as Order[],
     users: [] as any[],
+    drivers: [] as Driver[],
   });
 
   // Form states
@@ -188,6 +209,17 @@ const AdminDashboard: React.FC = () => {
             }));
           } catch (err) {
             console.error("Error fetching users:", err);
+          }
+          break;
+        case "drivers":
+          try {
+            const driversRes = await getAllDrivers();
+            setData((prev) => ({
+              ...prev,
+              drivers: driversRes.data?.drivers || driversRes.data || [],
+            }));
+          } catch (err) {
+            console.error("Error fetching drivers:", err);
           }
           break;
 
@@ -421,6 +453,42 @@ const AdminDashboard: React.FC = () => {
       }
     }
   };
+  // trail driver
+
+  // Driver handlers
+  const handleDriverDelete = async (driverId: string) => {
+    if (
+      window.confirm(
+        "Are you sure you want to delete this driver? This will also delete their user account."
+      )
+    ) {
+      try {
+        const reason = prompt("Enter reason for deletion (optional):");
+        await deleteDriver(driverId, reason || "Admin deletion");
+        fetchData();
+        alert("Driver deleted successfully");
+      } catch (error) {
+        console.error("Error deleting driver:", error);
+        alert("Failed to delete driver");
+      }
+    }
+  };
+
+  const handleVerificationUpdate = async (
+    driverId: string,
+    newStatus: string
+  ) => {
+    try {
+      await updateDriverVerification(driverId, newStatus);
+      fetchData();
+      alert("Driver verification status updated");
+    } catch (error) {
+      console.error("Error updating verification:", error);
+      alert("Failed to update verification status");
+    }
+  };
+
+  // trail driver
 
   // Order status handler
   const handleOrderStatusChange = async (
@@ -477,7 +545,6 @@ const AdminDashboard: React.FC = () => {
           Manage all aspects of your food delivery system
         </p>
       </div>
-
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
@@ -535,6 +602,24 @@ const AdminDashboard: React.FC = () => {
             </div>
           </div>
         </div>
+        {/* test driver */}
+        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500">Total Drivers</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">
+                {data.drivers.length}
+              </p>
+              <p className="text-sm text-gray-500 mt-1">
+                {data.drivers.filter((d) => d.isOnline).length} online
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-cyan-100 rounded-xl flex items-center justify-center">
+              <Users className="w-6 h-6 text-cyan-600" />
+            </div>
+          </div>
+        </div>
+        {/* test driver */}
       </div>
 
       {/* Tabs Navigation */}
@@ -546,6 +631,7 @@ const AdminDashboard: React.FC = () => {
             { id: "restaurants", label: "Restaurants", icon: Store },
             { id: "orders", label: "Orders", icon: ShoppingBag },
             { id: "users", label: "Users", icon: Users },
+            { id: "drivers", label: "Drivers", icon: Users },
           ].map((tab) => {
             const Icon = tab.icon;
             return (
@@ -565,7 +651,6 @@ const AdminDashboard: React.FC = () => {
           })}
         </div>
       </div>
-
       {/* Refresh Button */}
       <div className="flex justify-end mb-4">
         <button
@@ -577,7 +662,6 @@ const AdminDashboard: React.FC = () => {
           Refresh
         </button>
       </div>
-
       {/* Tab Content */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
         {loading ? (
@@ -731,7 +815,266 @@ const AdminDashboard: React.FC = () => {
                 </div>
               </div>
             )}
+            {/* trail driver */}
 
+            {/* Drivers Tab */}
+            {activeTab === "drivers" && (
+              <div className="space-y-6">
+                {/* Driver Stats */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <p className="text-sm text-gray-500">Total Drivers</p>
+                    <p className="text-xl font-bold text-gray-900">
+                      {data.drivers.length}
+                    </p>
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <p className="text-sm text-gray-500">Online Now</p>
+                    <p className="text-xl font-bold text-green-600">
+                      {data.drivers.filter((d) => d.isOnline).length}
+                    </p>
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <p className="text-sm text-gray-500">Verified</p>
+                    <p className="text-xl font-bold text-blue-600">
+                      {
+                        data.drivers.filter(
+                          (d) => d.verificationStatus === "APPROVED"
+                        ).length
+                      }
+                    </p>
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <p className="text-sm text-gray-500">Pending</p>
+                    <p className="text-xl font-bold text-yellow-600">
+                      {
+                        data.drivers.filter(
+                          (d) => d.verificationStatus === "PENDING"
+                        ).length
+                      }
+                    </p>
+                  </div>
+                </div>
+
+                {/* Drivers Table */}
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead>
+                      <tr className="bg-gray-50">
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Driver
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Vehicle Info
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Status
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Verification
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Performance
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {data.drivers.length === 0 ? (
+                        <tr>
+                          <td
+                            colSpan={6}
+                            className="px-6 py-8 text-center text-gray-500"
+                          >
+                            No drivers found
+                          </td>
+                        </tr>
+                      ) : (
+                        data.drivers.map((driver) => (
+                          <tr key={driver._id} className="hover:bg-gray-50">
+                            {/* Driver Info */}
+                            <td className="px-6 py-4">
+                              <div className="flex items-center">
+                                <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                  <Users className="h-5 w-5 text-blue-600" />
+                                </div>
+                                <div className="ml-4">
+                                  <div className="text-sm font-medium text-gray-900">
+                                    {driver.user?.userName || "N/A"}
+                                  </div>
+                                  <div className="text-sm text-gray-500">
+                                    {driver.user?.email || "N/A"}
+                                  </div>
+                                  <div className="text-xs text-gray-400">
+                                    {driver.user?.phone || "No phone"}
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+
+                            {/* Vehicle Info */}
+                            <td className="px-6 py-4">
+                              <div className="text-sm text-gray-900 font-medium">
+                                {driver.vehicleNumber}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                {driver.vehicleType}
+                              </div>
+                              <div className="text-xs text-gray-400">
+                                License: {driver.licenseNumber?.substring(0, 8)}
+                                ...
+                              </div>
+                            </td>
+
+                            {/* Status */}
+                            <td className="px-6 py-4">
+                              <div className="flex items-center">
+                                <div
+                                  className={`h-2 w-2 rounded-full mr-2 ${
+                                    driver.isOnline
+                                      ? "bg-green-500"
+                                      : "bg-gray-400"
+                                  }`}
+                                ></div>
+                                <span
+                                  className={`text-sm font-medium ${
+                                    driver.isOnline
+                                      ? "text-green-600"
+                                      : "text-gray-600"
+                                  }`}
+                                >
+                                  {driver.isOnline ? "Online" : "Offline"}
+                                </span>
+                              </div>
+                              <div className="text-xs text-gray-500 mt-1">
+                                {driver.isAvailable ? "Available" : "Busy"}
+                                {driver.currentOrder && " • On delivery"}
+                              </div>
+                            </td>
+
+                            {/* Verification Status */}
+                            <td className="px-6 py-4">
+                              <div className="flex items-center space-x-2">
+                                <span
+                                  className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                    driver.verificationStatus === "APPROVED"
+                                      ? "bg-green-100 text-green-800"
+                                      : driver.verificationStatus === "PENDING"
+                                      ? "bg-yellow-100 text-yellow-800"
+                                      : driver.verificationStatus === "REJECTED"
+                                      ? "bg-red-100 text-red-800"
+                                      : "bg-gray-100 text-gray-800"
+                                  }`}
+                                >
+                                  {driver.verificationStatus || "N/A"}
+                                </span>
+
+                                {/* Verification Actions */}
+                                <div className="flex flex-col gap-1">
+                                  {driver.verificationStatus !== "APPROVED" && (
+                                    <button
+                                      onClick={() =>
+                                        handleVerificationUpdate(
+                                          driver._id,
+                                          "APPROVED"
+                                        )
+                                      }
+                                      className="text-xs text-green-600 hover:text-green-800"
+                                    >
+                                      Approve
+                                    </button>
+                                  )}
+                                  {driver.verificationStatus !== "REJECTED" && (
+                                    <button
+                                      onClick={() =>
+                                        handleVerificationUpdate(
+                                          driver._id,
+                                          "REJECTED"
+                                        )
+                                      }
+                                      className="text-xs text-red-600 hover:text-red-800"
+                                    >
+                                      Reject
+                                    </button>
+                                  )}
+                                  {driver.verificationStatus !== "PENDING" && (
+                                    <button
+                                      onClick={() =>
+                                        handleVerificationUpdate(
+                                          driver._id,
+                                          "PENDING"
+                                        )
+                                      }
+                                      className="text-xs text-yellow-600 hover:text-yellow-800"
+                                    >
+                                      Set Pending
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            </td>
+
+                            {/* Performance */}
+                            <td className="px-6 py-4">
+                              <div className="text-sm">
+                                <div className="flex items-center">
+                                  <span className="text-gray-900 font-medium">
+                                    {driver.rating?.toFixed(1) || "N/A"}
+                                  </span>
+                                  <span className="text-yellow-500 ml-1">
+                                    ★
+                                  </span>
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  {driver.totalDeliveries || 0} deliveries
+                                </div>
+                                <div className="text-xs text-green-600 font-medium">
+                                  ₹{driver.totalEarnings || 0}
+                                </div>
+                              </div>
+                            </td>
+
+                            {/* Actions */}
+                            <td className="px-6 py-4">
+                              <div className="flex items-center space-x-2">
+                                <button
+                                  onClick={() => handleDriverDelete(driver._id)}
+                                  className="text-red-600 hover:text-red-900 p-1 hover:bg-red-50 rounded"
+                                  title="Delete Driver"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                                <button
+                                  className="text-blue-600 hover:text-blue-900 p-1 hover:bg-blue-50 rounded"
+                                  title="View Details"
+                                  onClick={() => {
+                                    // You can implement a modal to show driver details
+                                    alert(`Driver Details:
+Name: ${driver.user?.userName}
+Email: ${driver.user?.email}
+Vehicle: ${driver.vehicleNumber} (${driver.vehicleType})
+License: ${driver.licenseNumber}
+Rating: ${driver.rating || "N/A"}
+Total Deliveries: ${driver.totalDeliveries || 0}
+Total Earnings: ₹${driver.totalEarnings || 0}`);
+                                  }}
+                                >
+                                  <Edit2 className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* trail driver */}
             {/* Foods Tab */}
             {activeTab === "foods" && (
               <div className="space-y-6">

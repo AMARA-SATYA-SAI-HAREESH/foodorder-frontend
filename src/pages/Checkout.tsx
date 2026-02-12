@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -7,16 +7,22 @@ import {
   Truck,
   MapPin,
   CreditCard,
-  Home,
   Shield,
   CheckCircle,
   Package,
   Clock,
 } from "lucide-react";
+import axios from "axios";
+
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
 
 const Checkout: React.FC = () => {
-  const { state, clearCart, createOrder } = useCart();
-  const { token } = useAuth();
+  const { state, clearCart, createOrder, createRazorpayOrder } = useCart();
+  const { token, user } = useAuth();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -26,40 +32,199 @@ const Checkout: React.FC = () => {
     paymentMethod: "UPI" as "UPI" | "COD" | "CARD",
   });
   const [loading, setLoading] = useState(false);
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+  // Helper function for direct API calls
+  const createOrderDirectly = async (orderData: any) => {
+    try {
+      const response = await api.post("/api/order/create-order", orderData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      return response.data.order;
+    } catch (error) {
+      console.error("Direct order creation failed:", error);
+      throw error;
+    }
+  };
 
+  // Razorpay payment handler
+  const handleRazorpayPayment = async () => {
+    try {
+      setPaymentProcessing(true);
+      const amount = Math.round(state.totalAmount * 1.05);
+
+      // Step 1: Create Razorpay order from backend
+      const orderRes = await axios.post(
+        "http://localhost:8080/api/create-razorpay-order", // Changed endpoint name
+        {
+          amount,
+          currency: "INR",
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const { orderId } = orderRes.data;
+
+      // Step 2: Open Razorpay Checkout
+      const options = {
+        key: process.env.REACT_APP_RAZORPAY_KEY_ID,
+        amount: amount * 100,
+        currency: "INR",
+        name: "Food Delivery App",
+        description: "Food Order Payment",
+        order_id: orderId,
+        handler: async function (response: any) {
+          try {
+            // Step 3: Verify payment
+            const verifyRes = await axios.post(
+              "http://localhost:8080/api/verify-payment",
+              {
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_signature: response.razorpay_signature,
+              }
+            );
+
+            if (verifyRes.data.success) {
+              // Create order in your system
+              await createOrderWithPayment(verifyRes.data.paymentDetails);
+            } else {
+              throw new Error("Payment verification failed");
+            }
+          } catch (error) {
+            console.error("Payment verification failed:", error);
+            alert("Payment verification failed. Please contact support.");
+            setPaymentProcessing(false);
+          }
+        },
+        prefill: {
+          name: user?.userName || "Customer",
+          email: user?.email || "",
+          contact: formData.phone || "",
+        },
+        theme: {
+          color: "#F7931E",
+        },
+        modal: {
+          ondismiss: function () {
+            setPaymentProcessing(false);
+          },
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (error) {
+      console.error("Payment initialization failed:", error);
+      alert("Payment initialization failed");
+      setPaymentProcessing(false);
+    }
+  };
+
+  const createOrderWithPayment = async (paymentDetails: any) => {
     try {
       const orderData = {
         food: state.items.map((item) => ({
           foodId: item._id,
           quantity: item.quantity,
+          price: item.price,
         })),
+        restaurantId: state.items[0]?.restaurantId,
+        buyer: user?._id,
         payment: {
           method: formData.paymentMethod,
           amount: state.totalAmount,
-          transactionId: `TXN_${Date.now()}_${Math.random()
-            .toString(36)
-            .substr(2, 9)}`,
+          transactionId: paymentDetails.razorpay_payment_id,
+          razorpayOrderId: paymentDetails.razorpay_order_id,
+          status: "COMPLETED",
         },
-        address: formData.address,
-        status: "PENDING",
+        address: `${formData.address}, ${formData.city}`,
+        phone: formData.phone,
+        status: "CONFIRMED",
+        totalAmount: state.totalAmount * 1.05,
       };
 
-      const order = await createOrder();
+      // Use createRazorpayOrder from context
+      const order = await createRazorpayOrder(orderData);
+
       if (order) {
         navigate("/order-success", {
-          state: { orderId: order._id, amount: state.totalAmount },
+          state: {
+            orderId: order._id,
+            amount: state.totalAmount * 1.05,
+            paymentId: paymentDetails.razorpay_payment_id,
+          },
         });
       }
     } catch (error) {
+      console.error("Order creation failed:", error);
+      alert("Order creation failed");
+    } finally {
+      setPaymentProcessing(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formData.address || !formData.city || !formData.phone) {
+      alert("Please fill in all delivery details");
+      return;
+    }
+
+    if (formData.paymentMethod === "COD") {
+      handleCODOrder();
+    } else {
+      handleRazorpayPayment();
+    }
+  };
+
+  const handleCODOrder = async () => {
+    setLoading(true);
+    try {
+      // For COD, we use the original createOrder function (no parameters)
+      const order = await createOrder();
+
+      if (order) {
+        navigate("/order-success", {
+          state: {
+            orderId: order._id,
+            amount: state.totalAmount * 1.05,
+            isCOD: true,
+          },
+        });
+      }
+    } catch (error) {
+      console.error("COD order failed:", error);
       alert("Order failed");
     } finally {
       setLoading(false);
     }
   };
+
+  // Add script loader for Razorpay
+  useEffect(() => {
+    if (document.getElementById("razorpay-script")) return;
+
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.id = "razorpay-script";
+    script.async = true;
+    document.body.appendChild(script);
+
+    return () => {
+      if (document.getElementById("razorpay-script")) {
+        document.body.removeChild(script);
+      }
+    };
+  }, []);
 
   return (
     <div className="pt-16 min-h-screen bg-gray-50 py-8">
@@ -153,6 +318,7 @@ const Checkout: React.FC = () => {
                       }
                       className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                       placeholder="10-digit mobile number"
+                      pattern="[0-9]{10}"
                       required
                     />
                   </div>
@@ -189,7 +355,7 @@ const Checkout: React.FC = () => {
                         UPI / Wallet
                       </div>
                       <div className="text-sm text-gray-500">
-                        Google Pay, PhonePe, Paytm
+                        Google Pay, PhonePe, Paytm via Razorpay
                       </div>
                     </div>
                   </div>
@@ -245,7 +411,7 @@ const Checkout: React.FC = () => {
                         Credit / Debit Card
                       </div>
                       <div className="text-sm text-gray-500">
-                        Visa, Mastercard, RuPay
+                        Visa, Mastercard, RuPay via Razorpay
                       </div>
                     </div>
                   </div>
@@ -255,18 +421,30 @@ const Checkout: React.FC = () => {
                 </div>
               </div>
 
-              {/* Security Note */}
-              <div className="mt-8 p-4 bg-green-50 border border-green-200 rounded-xl flex items-start gap-3">
-                <Shield className="w-5 h-5 text-green-600 mt-0.5" />
-                <div>
-                  <div className="font-semibold text-green-800">
-                    Secure Payment
+              {/* Payment Note based on selection */}
+              {formData.paymentMethod === "COD" ? (
+                <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                  <div className="font-semibold text-blue-800 mb-1">
+                    Cash on Delivery Note
                   </div>
-                  <div className="text-sm text-green-700">
-                    Your payment information is encrypted and secure
+                  <div className="text-sm text-blue-700">
+                    You'll pay ₹{(state.totalAmount * 1.05).toFixed(0)} when
+                    your order arrives
                   </div>
                 </div>
-              </div>
+              ) : (
+                <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-xl flex items-start gap-3">
+                  <Shield className="w-5 h-5 text-green-600 mt-0.5" />
+                  <div>
+                    <div className="font-semibold text-green-800">
+                      Secure Payment via Razorpay
+                    </div>
+                    <div className="text-sm text-green-700">
+                      Your payment information is encrypted and secure
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -345,7 +523,14 @@ const Checkout: React.FC = () => {
               {/* Place Order Button */}
               <button
                 onClick={handleSubmit}
-                disabled={loading || state.items.length === 0}
+                disabled={
+                  loading ||
+                  paymentProcessing ||
+                  state.items.length === 0 ||
+                  !formData.address ||
+                  !formData.city ||
+                  !formData.phone
+                }
                 className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-4 px-6 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
               >
                 {loading ? (
@@ -353,10 +538,22 @@ const Checkout: React.FC = () => {
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                     Processing...
                   </>
+                ) : paymentProcessing ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Opening Payment...
+                  </>
                 ) : (
                   <>
                     <Package className="w-5 h-5" />
-                    Place Order • ₹{(state.totalAmount * 1.05).toFixed(0)}
+                    {formData.paymentMethod === "COD" ? (
+                      <>
+                        Place COD Order • ₹
+                        {(state.totalAmount * 1.05).toFixed(0)}
+                      </>
+                    ) : (
+                      <>Pay Now • ₹{(state.totalAmount * 1.05).toFixed(0)}</>
+                    )}
                   </>
                 )}
               </button>

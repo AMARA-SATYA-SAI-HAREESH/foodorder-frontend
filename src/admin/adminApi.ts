@@ -5,8 +5,21 @@ const API_URL = "http://localhost:8080";
 
 // Create axios instance with admin token
 const getAdminApi = () => {
-  const token = localStorage.getItem("adminToken");
-  console.log("adminToken:", token);
+  // const token = localStorage.getItem("adminToken");
+  const token =
+    localStorage.getItem("adminToken") || localStorage.getItem("token");
+  console.log("🔑 Admin token being used:", token ? "Yes" : "No");
+  console.log("🔑 Token substring:", token?.substring(0, 20) + "...");
+  if (!token) {
+    console.error("❌ No token found in localStorage!");
+    console.log("LocalStorage contents:");
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      console.log(
+        `${key}: ${localStorage.getItem(`${key}`)?.substring(0, 30)}...`
+      );
+    }
+  }
   return axios.create({
     baseURL: API_URL,
     headers: {
@@ -132,4 +145,46 @@ export const createUser = async (userData: any) => {
 export const updateUser = async (userId: string, userData: any) => {
   const api = getAdminApi();
   return api.put(`/user/delete-user/${userId}`, userData); // or your actual update endpoint
+};
+
+// Add these exports with proper typing:
+// export const getAllDrivers = () => axios.get("/all");
+// const api = getAdminApi();
+// export const getAllDrivers = () => api.get(`${API_URL}/api/driver/all`);
+// export const deleteDriver = (driverId: string, reason: string) =>
+//   api.delete(`${API_URL}/driver/admin/delete/${driverId}`, {
+//     data: { reason },
+//   });
+
+// export const updateDriverVerification = (
+//   driverId: string,
+//   verificationStatus: string
+// ) =>
+//   api.put(`${API_URL}/api/driver/verification/${driverId}`, {
+//     verificationStatus,
+//   });
+
+// Driver APIs - CORRECT URLs for your routes
+export const getAllDrivers = () => {
+  const api = getAdminApi();
+  return api.get("/api/driver/all");
+};
+
+export const deleteDriver = (driverId: string, reason: string) => {
+  const api = getAdminApi();
+  // Your route: DELETE /api/driver/admin/delete?id=xxx
+  return api.delete(`/api/driver/admin/delete?id=${driverId}`, {
+    data: { reason },
+  });
+};
+
+export const updateDriverVerification = (
+  driverId: string,
+  verificationStatus: string
+) => {
+  const api = getAdminApi();
+  // Your route: PUT /api/driver/verification?id=xxx
+  return api.put(`/api/driver/verification?id=${driverId}`, {
+    verificationStatus,
+  });
 };

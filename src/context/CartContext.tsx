@@ -1,3 +1,4 @@
+// src/context/CartContext.tsx - FIXED VERSION
 import React, {
   createContext,
   useContext,
@@ -69,7 +70,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
             ? { ...item, quantity: action.payload.quantity }
             : item
         )
-        .filter((item) => item.quantity > 0); // Remove if quantity 0
+        .filter((item) => item.quantity > 0);
 
       return {
         ...state,
@@ -117,6 +118,25 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
   }
 };
 
+// Define OrderData interface
+interface OrderData {
+  food: Array<{
+    foodId: string;
+    quantity: number;
+  }>;
+  payment: {
+    method: string;
+    amount: number;
+    transactionId?: string;
+    razorpayOrderId?: string;
+    status: string;
+  };
+  address: string;
+  phone: string;
+  status: string;
+  totalAmount: number;
+}
+
 interface CartContextType {
   state: CartState;
   dispatch: React.Dispatch<CartAction>;
@@ -125,6 +145,7 @@ interface CartContextType {
   removeFromCart: (foodId: string) => void;
   clearCart: () => void;
   createOrder: () => Promise<Order | null>;
+  createRazorpayOrder: (orderData: any) => Promise<Order | null>;
 }
 
 const CartContext = createContext<CartContextType | null>(null);
@@ -133,7 +154,6 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const [state, dispatch] = useReducer(cartReducer, initialState);
-  // const { auth } = useAuth();
   const { user, token } = useAuth();
 
   // Persist cart to localStorage
@@ -154,6 +174,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
   }, [state.items]);
 
   const addToCart = (food: Food) => {
+    console.log("Adding to cart:", food);
     dispatch({ type: "ADD_ITEM", payload: food });
   };
 
@@ -170,40 +191,188 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
     localStorage.removeItem("cart");
   };
 
-  const createOrder = async () => {
-    if (!token || state.items.length === 0) return null;
+  // Create Razorpay order function (moved inside the component)
+  const createRazorpayOrder = async (orderData: any): Promise<Order | null> => {
+    try {
+      if (!token) {
+        alert("Please login to place an order.");
+        return null;
+      }
 
-    dispatch({ type: "LOADING", payload: true });
+      // Use the provided orderData for Razorpay
+      const response = await api.post("/api/order/create-order", orderData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.data && response.data.order) {
+        clearCart();
+        return response.data.order;
+      }
+      return null;
+    } catch (error: any) {
+      console.error("Razorpay order creation error:", error);
+      alert(error.response?.data?.message || "Order failed");
+      return null;
+    }
+  };
+
+  // Original createOrder function (for COD)
+  const createOrder = async (): Promise<Order | null> => {
+    console.log("🛒 Starting order creation process");
 
     try {
+      // 1. Check authentication
+      if (!token) {
+        console.error("❌ No authentication token");
+        alert("Please login to place an order.");
+        return null;
+      }
+
+      if (!user?._id) {
+        console.error("❌ User ID not available");
+        alert("User information missing. Please login again.");
+        return null;
+      }
+
+      // 2. Check cart items
+      if (state.items.length === 0) {
+        console.error("❌ Cart is empty");
+        alert("Your cart is empty. Add items first.");
+        return null;
+      }
+
+      // 3. Validate cart items
+      console.log(
+        "📦 Cart items:",
+        state.items.map((item) => ({
+          id: item._id,
+          name: item.title,
+          quantity: item.quantity,
+          price: item.price,
+          restaurantId: item.restaurantId,
+          hasRestaurantId: !!item.restaurantId,
+        }))
+      );
+
+      // Check for missing restaurantId
+      const invalidItems = state.items.filter((item) => !item.restaurantId);
+      if (invalidItems.length > 0) {
+        console.error("❌ Items missing restaurantId:", invalidItems);
+        alert(
+          "Some items are missing restaurant information. Please remove and re-add them."
+        );
+        return null;
+      }
+
+      // Check for multiple restaurants
+      const restaurantIds: string[] = [];
+      state.items.forEach((item) => {
+        if (item.restaurantId && !restaurantIds.includes(item.restaurantId)) {
+          restaurantIds.push(item.restaurantId);
+        }
+      });
+
+      if (restaurantIds.length > 1) {
+        console.error("❌ Multiple restaurants in cart:", restaurantIds);
+        alert(
+          "Cannot order from multiple restaurants at once. Please order from one restaurant at a time."
+        );
+        return null;
+      }
+
+      const restaurantId = restaurantIds[0];
+      console.log("✅ Restaurant ID:", restaurantId);
+
+      // 4. Prepare order data
       const orderData = {
         food: state.items.map((item) => ({
           foodId: item._id,
           quantity: item.quantity,
+          price: item.price,
         })),
+        restaurantId: restaurantId,
+        buyer: user._id,
         payment: {
-          method: "UPI" as const, // Your enum
           amount: state.totalAmount,
-          transactionId: `TXN_${Date.now()}`, // Mock - replace with real payment
+          method: "COD",
+          status: "PENDING",
         },
-        buyer: user?._id || "", // From your JWT user
+        status: "PENDING",
+        totalAmount: state.totalAmount,
+        deliveryAddress: user.address || "Address not specified",
       };
 
-      const response = await api.post("/api/order/create-order", orderData);
+      console.log("📤 Order data being sent:", orderData);
 
-      // ✅ Replace entire createOrder function end:
-      if (response.data.status === true) {
-        // ✅ Check backend response
-        clearCart();
-        return response.data.order as Order;
+      // 5. Make API call
+      dispatch({ type: "LOADING", payload: true });
+
+      const response = await api.post("/api/order/create-order", orderData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      console.log("✅ API Response:", response.data);
+
+      // 6. Handle response
+      if (response.data && response.data.status === false) {
+        console.error("❌ Backend error:", response.data.message);
+        alert(`Order failed: ${response.data.message || "Unknown error"}`);
+        dispatch({ type: "LOADING", payload: false });
+        return null;
+      }
+
+      if (!response.data || !response.data.order) {
+        console.error("❌ No order in response");
+        alert("Order created but no confirmation received.");
+        dispatch({ type: "LOADING", payload: false });
+        return null;
+      }
+
+      // 7. Success
+      console.log(
+        "🎉 Order created successfully! Order ID:",
+        response.data.order._id
+      );
+
+      // Clear cart
+      clearCart();
+
+      // Show success message
+      alert(
+        `Order #${
+          response.data.order._id?.slice(-6) || ""
+        } placed successfully!`
+      );
+
+      dispatch({ type: "LOADING", payload: false });
+      return response.data.order;
+    } catch (error: any) {
+      console.error("💥 Order creation error:", error);
+      dispatch({ type: "LOADING", payload: false });
+
+      if (error.response) {
+        const errorMessage =
+          error.response.data?.message ||
+          error.response.data?.error ||
+          error.response.data ||
+          `Server error: ${error.response.status}`;
+
+        alert(`Order failed: ${errorMessage}`);
+      } else if (error.request) {
+        console.error("No response:", error.request);
+        alert("No response from server. Check your connection.");
+      } else {
+        console.error("Request error:", error.message);
+        alert(`Request failed: ${error.message}`);
       }
 
       return null;
-    } catch (error) {
-      console.error("Order creation failed:", error);
-      return null;
-    } finally {
-      dispatch({ type: "LOADING", payload: false });
     }
   };
 
@@ -215,6 +384,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
     removeFromCart,
     clearCart,
     createOrder,
+    createRazorpayOrder,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import { ImageComponent } from "../utils/imageHelper";
 import {
   ArrowLeft,
   Star,
@@ -225,9 +226,10 @@ const RestaurantPage = () => {
               >
                 {/* Square Food Image */}
                 <div className="relative flex-1 overflow-hidden bg-gradient-to-br from-gray-50 to-orange-50">
-                  <img
+                  <ImageComponent
                     src={food.imageUrl}
                     alt={food.title}
+                    type="food"
                     className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                   />
                   <div className="absolute top-2 right-2">

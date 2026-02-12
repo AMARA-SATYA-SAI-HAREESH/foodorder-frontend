@@ -96,6 +96,11 @@ export interface Order {
   _id: string;
   food: OrderFoodItem[];
   payment: { method: string; amount: number; transactionId: string };
+  verification?: {
+    deliveryOTP?: string;
+    otpExpiresAt?: string;
+    otpGeneratedAt?: string;
+  };
   buyer: string;
   status: string;
   createdAt?: string;
