@@ -77,17 +77,18 @@
 // };
 
 // export default api;
-
 import axios from "axios";
 
-// WRONG: This creates double /driver/driver/
-// const API_URL = process.env.REACT_APP_API_URL || "http://localhost:8080/api/driver";
+// Get base URL from env - could be with or without /api
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:8080";
 
-// CORRECT: Use base URL without /driver
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:8080/api";
+// ✅ FIX: Ensure URL ends with /api
+const baseURL = API_URL.endsWith("/api") ? API_URL : `${API_URL}/api`;
+
+console.log("🔧 Driver API Base URL:", baseURL); // Helpful for debugging
 
 const driverApi = axios.create({
-  baseURL: API_URL,
+  baseURL: baseURL,
   headers: {
     "Content-Type": "application/json",
   },
@@ -121,31 +122,29 @@ driverApi.interceptors.response.use(
 );
 
 export const api = {
-  // Auth - CORRECT: /api/driver/auth/login
+  // Auth
   login: (credentials) => driverApi.post("/driver/auth/login", credentials),
   register: (driverData) => driverApi.post("/driver/auth/register", driverData),
 
-  // Profile - CORRECT: /api/driver/profile
+  // Profile
   getProfile: () => driverApi.get("/driver/profile"),
 
-  // Location - CORRECT: /api/driver/location
+  // Location
   updateLocation: (locationData) =>
     driverApi.put("/driver/location", locationData),
 
-  // Status - CORRECT: /api/driver/online-status
+  // Status
   toggleOnlineStatus: (statusData) =>
     driverApi.put("/driver/online-status", statusData),
   setAvailability: (availability) =>
     driverApi.put("/driver/availability", availability),
 
-  // Orders - CORRECT: /api/driver/orders/available
+  // Orders
   getAvailableOrders: () => driverApi.get("/driver/orders/available"),
   acceptOrder: (orderId) =>
     driverApi.post("/driver/orders/accept", { orderId }),
   getCurrentOrder: () => driverApi.get("/driver/orders/current"),
   updateOrderStatus: (orderId, statusData) =>
-    // driverApi.put(`/driver/orders/${orderId}/status`, statusData),
-    // driverApi.put(`/driver/orders/status?id=${orderId}`, statusData),
     driverApi.put(`/driver/orders/status`, {
       ...statusData,
       id: orderId,
@@ -153,14 +152,7 @@ export const api = {
   getOrderHistory: (page = 1, limit = 20) =>
     driverApi.get(`/driver/orders/history?page=${page}&limit=${limit}`),
 
-  // Earnings - CORRECT: /api/driver/earnings/summary
-  // getEarningsSummary: () => driverApi.get("/driver/earnings/summary"),
-  // getPerformanceMetrics: () => driverApi.get("/driver/earnings/performance"),
-  // requestWithdrawal: (withdrawalData) =>
-  //   driverApi.post("/driver/earnings/withdraw", withdrawalData),
-  // getWithdrawalHistory: (page = 1, limit = 20) =>
-  //   driverApi.get(`/driver/earnings/withdrawals?page=${page}&limit=${limit}`),
-  // // Wallet & Payout APIs
+  // Wallet & Payout APIs (commented out for now)
   // getWalletSummary: () => driverApi.get("/payout/wallet"),
   // getPayoutHistory: (page = 1, limit = 20) =>
   //   driverApi.get(`/payout/history?page=${page}&limit=${limit}`),

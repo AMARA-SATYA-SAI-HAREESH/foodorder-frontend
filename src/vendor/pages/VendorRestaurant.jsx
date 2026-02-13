@@ -8,7 +8,6 @@ import {
   XCircle,
   Upload,
   Image as ImageIcon,
-  Globe,
   Phone,
   Mail,
   Edit2,

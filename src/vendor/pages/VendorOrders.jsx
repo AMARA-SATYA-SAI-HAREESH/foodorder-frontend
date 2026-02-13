@@ -1,5 +1,6 @@
 // src/vendor/pages/VendorOrders.jsx
-import React, { useState, useEffect } from "react";
+// import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Search,
   Filter,
@@ -31,12 +32,12 @@ const VendorOrders = () => {
   // ✅ NEW STATE FOR QR MODAL
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showQRModal, setShowQRModal] = useState(false);
-  useEffect(() => {
-    fetchOrders();
-    fetchStats();
-  }, [page, statusFilter]);
+  // useEffect(() => {
+  //   fetchOrders();
+  //   fetchStats();
+  // }, [page, statusFilter]);
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
       const params = {
@@ -44,9 +45,10 @@ const VendorOrders = () => {
         limit: 10,
         ...(statusFilter !== "all" && { status: statusFilter }),
       };
+
       const response = await getVendorOrders(params);
+
       if (response.data.status) {
-        console.log("📦 Orders from API:", response.data.orders);
         setOrders(response.data.orders);
         setTotalPages(response.data.pagination?.pages || 1);
       }
@@ -55,9 +57,9 @@ const VendorOrders = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, statusFilter]);
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     try {
       const response = await getOrderStats();
       if (response.data.status) {
@@ -66,102 +68,114 @@ const VendorOrders = () => {
     } catch (error) {
       console.error("Error fetching stats:", error);
     }
-  };
+  }, []);
 
-const handleStatusUpdate = async (orderId, newStatus) => {
-  try {
-    console.log("🔵 [VENDOR] Updating order status:", {
-      orderId,
-      newStatus,
-      timestamp: new Date().toISOString(),
-    });
+  // ✅ ADD THIS useEffect to load data when component mounts
+  useEffect(() => {
+    const loadData = async () => {
+      await Promise.all([fetchOrders(), fetchStats()]);
+    };
+    loadData();
+  }, [page, statusFilter, fetchOrders, fetchStats]); // Re-run when page or filter changes
 
-    // ⭐⭐ FIX: Send "READY" instead of "READY_FOR_PICKUP" to backend
-    const statusToSend = newStatus === "READY_FOR_PICKUP" ? "READY" : newStatus;
-    
-    console.log("🔄 [VENDOR] Sending to backend:", statusToSend);
-
-    const response = await updateOrderStatus({
-      orderId,
-      status: statusToSend, // ⭐ Send "READY" for READY_FOR_PICKUP
-    });
-
-    console.log("✅ [VENDOR] Status update response:", {
-      success: response.data?.status,
-      data: response.data,
-      order: response.data?.order,
-      verification: response.data?.verification,
-    });
-
-    // ⭐⭐ FIX: Check for READY status (not READY_FOR_PICKUP)
-    if (statusToSend === "READY") {
-      console.log(
-        "🟡 [VENDOR] Opening QR modal for READY order:",
+  const handleStatusUpdate = async (orderId, newStatus) => {
+    try {
+      console.log("🔵 [VENDOR] Updating order status:", {
         orderId,
-        "with verification:",
-        response.data?.verification
-      );
-      
-      // Use the updated order from API response (has verification codes)
-      if (response.data?.order) {
-        setSelectedOrder(response.data.order);
-        setShowQRModal(true);
-        
-        // Also update the order in local state with verification codes
-        setOrders(prevOrders =>
-          prevOrders.map(order =>
-            order._id === orderId 
-              ? { ...order, ...response.data.order, verification: response.data.order.verification }
-              : order
-          )
+        newStatus,
+        timestamp: new Date().toISOString(),
+      });
+
+      // ⭐⭐ FIX: Send "READY" instead of "READY_FOR_PICKUP" to backend
+      const statusToSend =
+        newStatus === "READY_FOR_PICKUP" ? "READY" : newStatus;
+
+      console.log("🔄 [VENDOR] Sending to backend:", statusToSend);
+
+      const response = await updateOrderStatus({
+        orderId,
+        status: statusToSend, // ⭐ Send "READY" for READY_FOR_PICKUP
+      });
+
+      console.log("✅ [VENDOR] Status update response:", {
+        success: response.data?.status,
+        data: response.data,
+        order: response.data?.order,
+        verification: response.data?.verification,
+      });
+
+      // ⭐⭐ FIX: Check for READY status (not READY_FOR_PICKUP)
+      if (statusToSend === "READY") {
+        console.log(
+          "🟡 [VENDOR] Opening QR modal for READY order:",
+          orderId,
+          "with verification:",
+          response.data?.verification,
         );
-      } else {
-        // Fallback to local order
-        const order = orders.find((o) => o._id === orderId);
-        if (order) {
-          setSelectedOrder(order);
+
+        // Use the updated order from API response (has verification codes)
+        if (response.data?.order) {
+          setSelectedOrder(response.data.order);
           setShowQRModal(true);
+
+          // Also update the order in local state with verification codes
+          setOrders((prevOrders) =>
+            prevOrders.map((order) =>
+              order._id === orderId
+                ? {
+                    ...order,
+                    ...response.data.order,
+                    verification: response.data.order.verification,
+                  }
+                : order,
+            ),
+          );
+        } else {
+          // Fallback to local order
+          const order = orders.find((o) => o._id === orderId);
+          if (order) {
+            setSelectedOrder(order);
+            setShowQRModal(true);
+          }
         }
       }
-    }
 
-    // Update local state with status change
-    setOrders(prevOrders =>
-      prevOrders.map(order =>
-        order._id === orderId 
-          ? { 
-              ...order, 
-              status: newStatus, // Keep frontend status as READY_FOR_PICKUP
-              ...(response.data?.order || {}) // Merge any other updates
-            } 
-          : order
-      )
-    );
-    
-    // If response has verification codes, log them for debugging
-    if (response.data?.verification) {
-      console.log("🔑 [VENDOR] Verification codes received:", {
-        pickupCode: response.data.verification.pickupCode,
-        deliveryOTP: response.data.verification.deliveryOTP,
-        qrGeneratedAt: response.data.verification.qrGeneratedAt
+      // Update local state with status change
+      setOrders((prevOrders) =>
+        prevOrders.map((order) =>
+          order._id === orderId
+            ? {
+                ...order,
+                status: newStatus, // Keep frontend status as READY_FOR_PICKUP
+                ...(response.data?.order || {}), // Merge any other updates
+              }
+            : order,
+        ),
+      );
+
+      // If response has verification codes, log them for debugging
+      if (response.data?.verification) {
+        console.log("🔑 [VENDOR] Verification codes received:", {
+          pickupCode: response.data.verification.pickupCode,
+          deliveryOTP: response.data.verification.deliveryOTP,
+          qrGeneratedAt: response.data.verification.qrGeneratedAt,
+        });
+      }
+    } catch (error) {
+      console.error("❌ [VENDOR] Error updating status:", {
+        error: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        url: error.config?.url,
       });
-    }
 
-  } catch (error) {
-    console.error("❌ [VENDOR] Error updating status:", {
-      error: error.message,
-      response: error.response?.data,
-      status: error.response?.status,
-      url: error.config?.url,
-    });
-    
-    let errorMessage = "Failed to update order status";
-    if (error.response?.data?.message) {
-      errorMessage += `: ${error.response.data.message}`;
+      let errorMessage = "Failed to update order status";
+      if (error.response?.data?.message) {
+        errorMessage += `: ${error.response.data.message}`;
+      }
+      alert(errorMessage);
     }
-    alert(errorMessage);
-  }
-};
+  };
   const handleAcceptReject = async (orderId, action) => {
     try {
       await acceptRejectOrder({ orderId, action });
@@ -230,24 +244,31 @@ const handleStatusUpdate = async (orderId, newStatus) => {
     (order) =>
       order._id.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.buyer?.userName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.buyer?.email?.toLowerCase().includes(searchTerm.toLowerCase())
+      order.buyer?.email?.toLowerCase().includes(searchTerm.toLowerCase()),
   );
   // ✅ NEW: Check if order can show QR
-const canShowQR = (order) => {
-  console.log("🔍 QR Check for order:", {
-    id: order._id,
-    status: order.status,
-    verification: order.verification,
-    hasPickupCode: !!order.verification?.pickupCode,
-    hasDeliveryOTP: !!order.verification?.deliveryOTP,
-    validStatus: ["READY_FOR_PICKUP", "ACCEPTED", "PICKED_UP"].includes(order.status)
-  });
-  
-  const hasValidStatus = ["READY_FOR_PICKUP", "ACCEPTED", "PICKED_UP"].includes(order.status);
-  const hasVerification = order.verification?.pickupCode && order.verification?.deliveryOTP;
-  
-  return hasValidStatus && hasVerification;
-};
+  const canShowQR = (order) => {
+    console.log("🔍 QR Check for order:", {
+      id: order._id,
+      status: order.status,
+      verification: order.verification,
+      hasPickupCode: !!order.verification?.pickupCode,
+      hasDeliveryOTP: !!order.verification?.deliveryOTP,
+      validStatus: ["READY_FOR_PICKUP", "ACCEPTED", "PICKED_UP"].includes(
+        order.status,
+      ),
+    });
+
+    const hasValidStatus = [
+      "READY_FOR_PICKUP",
+      "ACCEPTED",
+      "PICKED_UP",
+    ].includes(order.status);
+    const hasVerification =
+      order.verification?.pickupCode && order.verification?.deliveryOTP;
+
+    return hasValidStatus && hasVerification;
+  };
   if (loading && page === 1) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -407,7 +428,7 @@ const canShowQR = (order) => {
                     </div>
                     <span
                       className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                        order.status
+                        order.status,
                       )}`}
                     >
                       {getStatusIcon(order.status)}
@@ -472,9 +493,7 @@ const canShowQR = (order) => {
 
                     {order.status === "PREPARING" && (
                       <button
-                        onClick={() =>
-                          handleStatusUpdate(order._id, "READY")
-                        }
+                        onClick={() => handleStatusUpdate(order._id, "READY")}
                         className="flex-1 px-3 py-1.5 bg-green-100 text-green-700 text-xs rounded-lg hover:bg-green-200"
                       >
                         Ready for Pickup
@@ -484,7 +503,7 @@ const canShowQR = (order) => {
                       "Order status:",
                       order.status,
                       "Can show QR:",
-                      canShowQR(order)
+                      canShowQR(order),
                     )}
                     {/* ✅ QR Button for Mobile */}
                     {canShowQR(order) && (
@@ -586,7 +605,7 @@ const canShowQR = (order) => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
                         className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                          order.status
+                          order.status,
                         )}`}
                       >
                         {getStatusIcon(order.status)}
@@ -664,7 +683,7 @@ const canShowQR = (order) => {
                           "Desktop - Order status:",
                           order.status,
                           "Can show QR:",
-                          canShowQR(order)
+                          canShowQR(order),
                         )}
                         {/* ✅ QR Button for Desktop */}
                         {canShowQR(order) && (

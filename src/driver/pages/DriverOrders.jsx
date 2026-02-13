@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useDriver } from "../context/DriverContext";
 import driverApi from "../api/driverApi";
 import {
@@ -31,14 +31,14 @@ const DriverOrders = () => {
     // Check if driver is online when component mounts
     console.log(
       "🚗 [DRIVER] Component mounted, checking online status:",
-      isOnline
+      isOnline,
     );
     if (!isOnline && activeTab === "available") {
       console.log("ℹ️ [DRIVER] Driver is offline, orders may not be visible");
     }
   }, [isOnline, activeTab]);
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
       let response;
@@ -46,7 +46,7 @@ const DriverOrders = () => {
       console.log("🚗 [DRIVER] Fetching orders for tab:", activeTab);
       console.log(
         "🔑 [DRIVER] Driver token exists:",
-        !!localStorage.getItem("driverToken")
+        !!localStorage.getItem("driverToken"),
       );
 
       if (activeTab === "available") {
@@ -65,7 +65,7 @@ const DriverOrders = () => {
           setOrders(response.data.orders || []);
           console.log(
             "✅ [DRIVER] Set available orders:",
-            response.data.orders?.length || 0
+            response.data.orders?.length || 0,
           );
         } else {
           console.error("❌ [DRIVER] API returned failure:", response.data);
@@ -114,7 +114,7 @@ const DriverOrders = () => {
       setLoading(false);
       console.log("⏱️ [DRIVER] fetchOrders completed");
     }
-  };
+  }, [activeTab, dateFilter]);
 
   const handleAcceptOrder = async (orderId) => {
     try {
@@ -434,8 +434,8 @@ const DriverOrders = () => {
             {activeTab === "available"
               ? "No available orders at the moment. Check back soon!"
               : activeTab === "current"
-              ? "You don't have any active orders"
-              : "No order history found"}
+                ? "You don't have any active orders"
+                : "No order history found"}
           </p>
         </div>
       )}

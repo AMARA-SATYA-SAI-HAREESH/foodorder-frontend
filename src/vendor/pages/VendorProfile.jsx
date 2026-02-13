@@ -8,7 +8,6 @@ import {
   Camera,
   Shield,
   Bell,
-  Globe,
   Save,
   Key,
   LogOut,
@@ -167,7 +166,7 @@ const VendorProfile = () => {
                 { id: "profile", icon: User, label: "Profile Information" },
                 { id: "security", icon: Shield, label: "Security" },
                 { id: "notifications", icon: Bell, label: "Notifications" },
-                { id: "preferences", icon: Globe, label: "Preferences" },
+                // { id: "preferences", icon: Globe, label: "Preferences" },
               ].map((tab) => (
                 <button
                   key={tab.id}
