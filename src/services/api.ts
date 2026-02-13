@@ -1,8 +1,8 @@
 import axios from "axios";
 import { useAuth } from "../context/AuthContext"; // Skip in services
-
+console.log("API URL:", process.env.REACT_APP_API_URL);
 const api = axios.create({
-  baseURL: "http://localhost:8080",
+  baseURL: `${process.env.REACT_APP_API_URL}`,
 });
 
 // Auto-add JWT token to requests

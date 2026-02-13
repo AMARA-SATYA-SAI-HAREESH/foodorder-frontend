@@ -1,10 +1,10 @@
-import React, { useState, useRef } from 'react';
-import { QrCode, Camera, X, AlertCircle, CheckCircle } from 'lucide-react';
-import { useDriver } from '../context/DriverContext';
+import React, { useState, useRef } from "react";
+import { QrCode, Camera, X, AlertCircle, CheckCircle } from "lucide-react";
+import { useDriver } from "../context/DriverContext";
 
 const QRScanner = ({ orderId, onScanSuccess, onClose }) => {
   const [scanning, setScanning] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [cameraActive, setCameraActive] = useState(true);
   const { driver } = useDriver();
@@ -13,10 +13,10 @@ const QRScanner = ({ orderId, onScanSuccess, onClose }) => {
     if (data && scanning) {
       setScanning(false);
       setCameraActive(false);
-      
+
       try {
-        console.log('📱 QR Scanned:', data.text);
-        
+        console.log("📱 QR Scanned:", data.text);
+
         // Parse QR data
         let qrData;
         try {
@@ -27,47 +27,50 @@ const QRScanner = ({ orderId, onScanSuccess, onClose }) => {
         }
 
         // Call verification API
-        const response = await fetch(`http://localhost:8080/api/verification/${orderId}/verify-pickup`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('driverToken')}`
+        const response = await fetch(
+          `${process.env.REACT_APP_API_URL}/api/verification/${orderId}/verify-pickup`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("driverToken")}`,
+            },
+            body: JSON.stringify({
+              driverId: driver._id,
+              verificationCode: qrData.pickupCode || data.text,
+              method: "QR",
+            }),
           },
-          body: JSON.stringify({
-            driverId: driver._id,
-            verificationCode: qrData.pickupCode || data.text,
-            method: 'QR'
-          })
-        });
+        );
 
         const result = await response.json();
-        
+
         if (result.success) {
           setSuccess(true);
           setTimeout(() => {
             onScanSuccess(result);
           }, 1500);
         } else {
-          setError(result.message || 'Verification failed');
+          setError(result.message || "Verification failed");
           setScanning(true);
           setCameraActive(true);
         }
       } catch (err) {
-        setError('Network error. Please try again.');
+        setError("Network error. Please try again.");
         setScanning(true);
         setCameraActive(true);
-        console.error('Verification error:', err);
+        console.error("Verification error:", err);
       }
     }
   };
 
   const handleError = (err) => {
-    console.error('QR Scanner error:', err);
-    setError('Camera error. Please check permissions.');
+    console.error("QR Scanner error:", err);
+    setError("Camera error. Please check permissions.");
   };
 
   const handleRetry = () => {
-    setError('');
+    setError("");
     setScanning(true);
     setCameraActive(true);
   };
@@ -101,13 +104,13 @@ const QRScanner = ({ orderId, onScanSuccess, onClose }) => {
           <div className="relative w-full max-w-md aspect-square">
             {/* Scanner border */}
             <div className="absolute inset-8 border-2 border-green-500 rounded-2xl animate-pulse"></div>
-            
+
             {/* Corner markers */}
             <div className="absolute top-8 left-8 w-8 h-8 border-t-2 border-l-2 border-green-500"></div>
             <div className="absolute top-8 right-8 w-8 h-8 border-t-2 border-r-2 border-green-500"></div>
             <div className="absolute bottom-8 left-8 w-8 h-8 border-b-2 border-l-2 border-green-500"></div>
             <div className="absolute bottom-8 right-8 w-8 h-8 border-b-2 border-r-2 border-green-500"></div>
-            
+
             {/* Instruction text */}
             <div className="absolute -bottom-16 left-0 right-0 text-center">
               <p className="text-white text-lg font-medium">
@@ -126,9 +129,7 @@ const QRScanner = ({ orderId, onScanSuccess, onClose }) => {
             <h3 className="text-2xl font-bold text-white mb-2">
               Pickup Verified!
             </h3>
-            <p className="text-gray-300">
-              Order successfully picked up
-            </p>
+            <p className="text-gray-300">Order successfully picked up</p>
           </div>
         ) : (
           <div className="text-center p-8">

@@ -16,7 +16,8 @@ export const SocketProvider = ({ children }) => {
 
   useEffect(() => {
     // Connect to your backend socket server
-    const newSocket = io("http://localhost:8080", {
+    const SOCKET_URL = process.env.REACT_APP_API_URL.replace("/api", "");
+    const newSocket = io(SOCKET_URL, {
       transports: ["websocket", "polling"],
       withCredentials: true,
     });

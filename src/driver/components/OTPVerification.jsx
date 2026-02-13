@@ -1,5 +1,12 @@
 import React, { useState, useRef } from "react";
-import { Smartphone, Key, ArrowLeft, CheckCircle, XCircle, Clock } from "lucide-react";
+import {
+  Smartphone,
+  Key,
+  ArrowLeft,
+  CheckCircle,
+  XCircle,
+  Clock,
+} from "lucide-react";
 
 const OTPVerification = ({ order, onSuccess, onBack }) => {
   const [otp, setOtp] = useState(["", "", "", ""]);
@@ -74,17 +81,18 @@ const OTPVerification = ({ order, onSuccess, onBack }) => {
       const driverId = driverData._id || driverData.id;
 
       const response = await fetch(
-        `http://localhost:8080/api/otp/${order._id || order.id}/verify`,
+        // `http://localhost:8080/api/otp/${order._id || order.id}/verify`,
+        `${process.env.REACT_APP_API_URL}/api/otp/${order._id || order.id}/verify`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("driverToken")}`,
+            Authorization: `Bearer ${localStorage.getItem("driverToken")}`,
           },
           body: JSON.stringify({
             otp: otpString,
           }),
-        }
+        },
       );
 
       const result = await response.json();
@@ -108,10 +116,7 @@ const OTPVerification = ({ order, onSuccess, onBack }) => {
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white p-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
-        <button
-          onClick={onBack}
-          className="p-2 hover:bg-gray-100 rounded-lg"
-        >
+        <button onClick={onBack} className="p-2 hover:bg-gray-100 rounded-lg">
           <ArrowLeft className="w-5 h-5 text-gray-600" />
         </button>
         <h1 className="text-lg font-bold text-gray-900">Verify Delivery</h1>
@@ -132,8 +137,8 @@ const OTPVerification = ({ order, onSuccess, onBack }) => {
               Ask customer for OTP
             </p>
             <p className="text-sm text-blue-700">
-              Customer should have received a 4-digit OTP on their phone.
-              Enter it below to complete delivery.
+              Customer should have received a 4-digit OTP on their phone. Enter
+              it below to complete delivery.
             </p>
           </div>
         </div>

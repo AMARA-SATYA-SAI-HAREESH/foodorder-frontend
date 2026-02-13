@@ -16,12 +16,15 @@ const ForgotPassword: React.FC = () => {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:8080/user/update-password", {
-        // 👆 route must match your Express route (POST /user/new-password)
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, answer, newPassword }),
-      });
+      const res = await fetch(
+        `${process.env.REACT_APP_API_URL}/user/update-password`,
+        {
+          // 👆 route must match your Express route (POST /user/new-password)
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, answer, newPassword }),
+        },
+      );
 
       const data = await res.json();
 

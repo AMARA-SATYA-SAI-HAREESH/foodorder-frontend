@@ -1,20 +1,20 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Smartphone, 
-  Key, 
-  ArrowLeft, 
-  CheckCircle, 
+import React, { useState, useEffect, useRef } from "react";
+import {
+  Smartphone,
+  Key,
+  ArrowLeft,
+  CheckCircle,
   XCircle,
   Clock,
   MapPin,
-  User
-} from 'lucide-react';
-import { useDriver } from '../context/DriverContext';
+  User,
+} from "lucide-react";
+import { useDriver } from "../context/DriverContext";
 
 const DeliveryVerification = ({ order, onSuccess, onBack }) => {
-  const [otp, setOtp] = useState(['', '', '', '']);
+  const [otp, setOtp] = useState(["", "", "", ""]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [timeLeft, setTimeLeft] = useState(600); // 10 minutes for delivery
   const inputRefs = useRef([]);
@@ -31,30 +31,30 @@ const DeliveryVerification = ({ order, onSuccess, onBack }) => {
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
   };
 
   // Handle OTP input
   const handleOtpChange = (index, value) => {
     if (!/^\d*$/.test(value)) return; // Only numbers
-    
+
     const newOtp = [...otp];
     newOtp[index] = value;
     setOtp(newOtp);
-    
+
     // Auto-focus next input
     if (value && index < 3) {
       inputRefs.current[index + 1]?.focus();
     }
-    
+
     // Auto-submit if all digits entered
-    if (newOtp.every(digit => digit !== '') && index === 3) {
+    if (newOtp.every((digit) => digit !== "") && index === 3) {
       handleVerifyDelivery();
     }
   };
 
   const handleKeyDown = (index, e) => {
-    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
       // Move to previous input on backspace
       inputRefs.current[index - 1]?.focus();
     }
@@ -62,38 +62,39 @@ const DeliveryVerification = ({ order, onSuccess, onBack }) => {
 
   const handlePaste = (e) => {
     e.preventDefault();
-    const pastedData = e.clipboardData.getData('text').slice(0, 4);
+    const pastedData = e.clipboardData.getData("text").slice(0, 4);
     if (/^\d{4}$/.test(pastedData)) {
-      const digits = pastedData.split('');
+      const digits = pastedData.split("");
       setOtp(digits);
       inputRefs.current[3]?.focus();
     }
   };
 
   const handleVerifyDelivery = async () => {
-    const otpString = otp.join('');
+    const otpString = otp.join("");
     if (otpString.length !== 4) {
-      setError('Please enter 4-digit OTP');
+      setError("Please enter 4-digit OTP");
       return;
     }
 
     setLoading(true);
-    setError('');
+    setError("");
 
     try {
       const response = await fetch(
-        `http://localhost:8080/api/verification/${order._id}/verify-delivery`,
+        // `http://localhost:8080/api/verification/${order._id}/verify-delivery`,
+        `${process.env.REACT_APP_API_URL}/api/verification/${order._id}/verify-delivery`,
         {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('driverToken')}`,
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("driverToken")}`,
           },
           body: JSON.stringify({
             driverId: driver._id,
             otp: otpString,
           }),
-        }
+        },
       );
 
       const result = await response.json();
@@ -104,14 +105,14 @@ const DeliveryVerification = ({ order, onSuccess, onBack }) => {
           onSuccess(result);
         }, 2000);
       } else {
-        setError(result.message || 'Invalid OTP');
+        setError(result.message || "Invalid OTP");
         // Clear OTP on error
-        setOtp(['', '', '', '']);
+        setOtp(["", "", "", ""]);
         inputRefs.current[0]?.focus();
       }
     } catch (err) {
-      setError('Network error. Please try again.');
-      console.error('Delivery verification error:', err);
+      setError("Network error. Please try again.");
+      console.error("Delivery verification error:", err);
     } finally {
       setLoading(false);
     }
@@ -129,10 +130,10 @@ const DeliveryVerification = ({ order, onSuccess, onBack }) => {
         <p className="text-gray-600 mb-8 text-center">
           Order successfully delivered to customer
         </p>
-        
+
         <div className="bg-white p-6 rounded-xl border border-gray-200 w-full max-w-md shadow-sm">
           <h3 className="font-bold text-gray-900 mb-4">Delivery Summary</h3>
-          
+
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-gray-600">Order ID</span>
@@ -151,7 +152,7 @@ const DeliveryVerification = ({ order, onSuccess, onBack }) => {
               <span className="font-medium">{order.payment?.method}</span>
             </div>
           </div>
-          
+
           <div className="mt-6 pt-6 border-t border-gray-200">
             <p className="text-center text-gray-500 text-sm">
               Thank you for the delivery!
@@ -166,10 +167,7 @@ const DeliveryVerification = ({ order, onSuccess, onBack }) => {
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white p-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
-        <button
-          onClick={onBack}
-          className="p-2 hover:bg-gray-100 rounded-lg"
-        >
+        <button onClick={onBack} className="p-2 hover:bg-gray-100 rounded-lg">
           <ArrowLeft className="w-5 h-5 text-gray-600" />
         </button>
         <h1 className="text-lg font-bold text-gray-900">Verify Delivery</h1>
@@ -192,7 +190,7 @@ const DeliveryVerification = ({ order, onSuccess, onBack }) => {
             #{order._id?.slice(-6)}
           </span>
         </div>
-        
+
         <div className="space-y-3">
           <div className="flex items-start gap-2">
             <MapPin className="w-4 h-4 text-gray-400 mt-0.5" />
@@ -201,7 +199,7 @@ const DeliveryVerification = ({ order, onSuccess, onBack }) => {
               <p className="text-gray-900">{order.deliveryAddress}</p>
             </div>
           </div>
-          
+
           <div className="flex items-start gap-2">
             <User className="w-4 h-4 text-gray-400 mt-0.5" />
             <div>
@@ -222,7 +220,8 @@ const DeliveryVerification = ({ order, onSuccess, onBack }) => {
               Ask customer for OTP
             </p>
             <p className="text-sm text-blue-700">
-              The customer should have received a 4-digit OTP on their registered phone number.
+              The customer should have received a 4-digit OTP on their
+              registered phone number.
             </p>
           </div>
         </div>
@@ -233,7 +232,7 @@ const DeliveryVerification = ({ order, onSuccess, onBack }) => {
         <label className="block text-sm font-medium text-gray-700 mb-4 text-center">
           Enter 4-digit OTP
         </label>
-        
+
         <div className="flex justify-center gap-3 mb-6">
           {[0, 1, 2, 3].map((index) => (
             <input
@@ -251,7 +250,7 @@ const DeliveryVerification = ({ order, onSuccess, onBack }) => {
             />
           ))}
         </div>
-        
+
         <p className="text-center text-gray-500 text-sm">
           Enter the OTP provided by customer
         </p>
@@ -268,11 +267,11 @@ const DeliveryVerification = ({ order, onSuccess, onBack }) => {
       {/* Verify Button */}
       <button
         onClick={handleVerifyDelivery}
-        disabled={loading || otp.join('').length !== 4}
+        disabled={loading || otp.join("").length !== 4}
         className={`w-full py-4 rounded-xl font-bold text-lg mb-4 ${
-          loading || otp.join('').length !== 4
-            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-            : 'bg-green-600 text-white hover:bg-green-700'
+          loading || otp.join("").length !== 4
+            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+            : "bg-green-600 text-white hover:bg-green-700"
         }`}
       >
         {loading ? (
@@ -281,18 +280,19 @@ const DeliveryVerification = ({ order, onSuccess, onBack }) => {
             Verifying...
           </div>
         ) : (
-          'Complete Delivery'
+          "Complete Delivery"
         )}
       </button>
 
       {/* COD Payment Notice */}
-      {order.payment?.method === 'COD' && (
+      {order.payment?.method === "COD" && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
           <p className="text-sm text-amber-800 font-medium mb-1">
             💵 Cash on Delivery
           </p>
           <p className="text-sm text-amber-700">
-            Collect ₹{order.payment?.amount} from customer before completing delivery.
+            Collect ₹{order.payment?.amount} from customer before completing
+            delivery.
           </p>
         </div>
       )}
@@ -302,7 +302,7 @@ const DeliveryVerification = ({ order, onSuccess, onBack }) => {
         <button
           onClick={() => {
             // Show manual verification options
-            alert('Contact customer for OTP or call support');
+            alert("Contact customer for OTP or call support");
           }}
           className="text-blue-600 text-sm hover:text-blue-700"
         >

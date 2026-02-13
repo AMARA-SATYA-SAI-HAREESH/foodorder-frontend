@@ -1,7 +1,7 @@
 // src/vendor/api/vendorApi.js
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:8080/api/vendor";
+const API_BASE_URL = `${process.env.REACT_APP_API_URL}/api/vendor`;
 
 // Create axios instance with interceptors
 const vendorApi = axios.create({

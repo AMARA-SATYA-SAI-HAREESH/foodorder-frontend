@@ -102,7 +102,8 @@ const DriverDashboard = () => {
 
       // Generate and send OTP
       const response = await fetch(
-        `http://localhost:8080/api/otp/${orderId}/generate`,
+        // `http://localhost:8080/api/otp/${orderId}/generate`,
+        `${process.env.REACT_APP_API_URL}/api/otp/${orderId}/generate`,
         {
           method: "POST",
           headers: {

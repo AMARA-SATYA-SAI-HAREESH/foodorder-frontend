@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // const API_URL = process.env.REACT_APP_API_URL || "http://localhost:8080";
-const API_URL = "http://localhost:8080";
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:8080";
 
 // Create axios instance with admin token
 const getAdminApi = () => {
@@ -16,7 +16,7 @@ const getAdminApi = () => {
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       console.log(
-        `${key}: ${localStorage.getItem(`${key}`)?.substring(0, 30)}...`
+        `${key}: ${localStorage.getItem(`${key}`)?.substring(0, 30)}...`,
       );
     }
   }
@@ -180,7 +180,7 @@ export const deleteDriver = (driverId: string, reason: string) => {
 
 export const updateDriverVerification = (
   driverId: string,
-  verificationStatus: string
+  verificationStatus: string,
 ) => {
   const api = getAdminApi();
   // Your route: PUT /api/driver/verification?id=xxx

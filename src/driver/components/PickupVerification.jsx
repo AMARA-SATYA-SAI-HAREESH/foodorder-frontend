@@ -70,7 +70,8 @@ const PickupVerification = ({ order, onSuccess, onBack }) => {
       console.log("🔍 [FRONTEND] Verifying pickup for order:", orderId);
 
       const response = await fetch(
-        `http://localhost:8080/api/verification/${orderId}/verify-pickup`,
+        // `http://localhost:8080/api/verification/${orderId}/verify-pickup`,
+        `${process.env.REACT_APP_API_URL}/api/verification/${orderId}/verify-pickup`,
         {
           method: "POST",
           headers: {

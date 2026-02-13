@@ -58,7 +58,8 @@ const Checkout: React.FC = () => {
 
       // Step 1: Create Razorpay order from backend
       const orderRes = await axios.post(
-        "http://localhost:8080/api/create-razorpay-order", // Changed endpoint name
+        // "http://localhost:8080/api/create-razorpay-order", // Changed endpoint name
+        `${process.env.REACT_APP_API_URL}/api/create-razorpay-order`,
         {
           amount,
           currency: "INR",
@@ -67,7 +68,7 @@ const Checkout: React.FC = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       const { orderId } = orderRes.data;
@@ -84,12 +85,13 @@ const Checkout: React.FC = () => {
           try {
             // Step 3: Verify payment
             const verifyRes = await axios.post(
-              "http://localhost:8080/api/verify-payment",
+              // "http://localhost:8080/api/verify-payment",
+              `${process.env.REACT_APP_API_URL}/api/verify-payment`,
               {
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_signature: response.razorpay_signature,
-              }
+              },
             );
 
             if (verifyRes.data.success) {
