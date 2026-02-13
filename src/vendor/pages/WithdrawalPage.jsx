@@ -20,13 +20,11 @@ import { addBankAccount, requestWithdrawal } from "../api/vendorApi"; // Add thi
 const WithdrawalPage = () => {
   const {
     vendor,
-    restaurant,
     vendorBalance, // USE THIS from context
     bankAccounts, // USE THIS from context
     withdrawals, // USE THIS from context
     fetchVendorBalance, // USE THIS from context
     fetchWithdrawalHistory, // USE THIS from context
-    setWithdrawals,
   } = useVendor();
 
   const navigate = useNavigate();
@@ -62,13 +60,13 @@ const WithdrawalPage = () => {
   // Refresh data on component mount
   useEffect(() => {
     refreshData();
-  }, []);
+  }, [refreshData]);
   // Add this useEffect to auto-refresh when switching to history tab
   useEffect(() => {
     if (activeTab === "history") {
       refreshData();
     }
-  }, [activeTab]);
+  }, [activeTab, refreshData]);
   const refreshData = async () => {
     setRefreshing(true);
     try {
