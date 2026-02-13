@@ -34,7 +34,6 @@ const WithdrawalPage = () => {
 
   // ✅ REMOVE THESE HARDCODED STATES:
   // const [bankAccounts, setBankAccounts] = useState([...]);
-  // const [withdrawals, setWithdrawals] = useState([...]);
   // const [balance, setBalance] = useState({...});
 
   // Withdrawal Form State
@@ -216,46 +215,6 @@ const WithdrawalPage = () => {
     refreshData();
   };
   // Set default account - ACTUAL API CALL
-  const handleSetDefaultAccount = async (id) => {
-    if (!window.confirm("Set this account as default for withdrawals?")) return;
-
-    try {
-      const response = await setDefaultAccount(id);
-      if (response.data?.success) {
-        alert("Default account updated successfully!");
-        refreshData();
-      }
-    } catch (error) {
-      console.error("Error setting default account:", error);
-      alert(error.response?.data?.message || "Failed to set default account");
-    }
-  };
-
-  // Delete bank account - ACTUAL API CALL
-  const handleDeleteBankAccount = async (id) => {
-    const account = bankAccounts?.find((acc) => acc._id === id);
-    if (!account) return;
-
-    if (account.isDefault) {
-      alert("Cannot delete default account. Set another as default first.");
-      return;
-    }
-
-    if (!window.confirm("Are you sure you want to delete this bank account?")) {
-      return;
-    }
-
-    try {
-      const response = await deleteBankAccount(id);
-      if (response.data?.success) {
-        alert("Bank account deleted successfully!");
-        refreshData();
-      }
-    } catch (error) {
-      console.error("Error deleting bank account:", error);
-      alert(error.response?.data?.message || "Failed to delete bank account");
-    }
-  };
   // Delete bank account - UPDATED
   const deleteBankAccount = (id) => {
     if (bankAccounts?.find((acc) => acc.id === id)?.isDefault) {
