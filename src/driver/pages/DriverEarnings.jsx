@@ -41,27 +41,37 @@ const DriverEarnings = () => {
     try {
       setLoading(true);
 
-      // Use new payout API endpoints
-      const [summaryRes, performanceRes, walletRes, payoutsRes] =
-        await Promise.all([
-          driverApi.getEarningsSummary(),
-          driverApi.getPerformanceMetrics(),
-          driverApi.getWalletSummary(), // NEW: Get wallet with hold balance
-          driverApi.getPayoutHistory(), // NEW: Get auto-payout history
-        ]);
+      // API calls are removed - using default values instead
+      await new Promise((resolve) => setTimeout(resolve, 500)); // Small delay for loading state
 
-      if (summaryRes.data?.success) {
-        setEarnings((prev) => ({ ...prev, summary: summaryRes.data.summary }));
-      }
-      if (performanceRes.data?.success) {
-        setEarnings((prev) => ({ ...prev, performance: performanceRes.data }));
-      }
-      if (walletRes.data?.success) {
-        setEarnings((prev) => ({ ...prev, wallet: walletRes.data.wallet }));
-      }
-      if (payoutsRes.data?.success) {
-        setEarnings((prev) => ({ ...prev, payouts: payoutsRes.data.payouts }));
-      }
+      // Set default values
+      setEarnings({
+        summary: {
+          today: { earnings: 0, deliveries: 0, tips: 0 },
+          week: { earnings: 0, deliveries: 0 },
+          month: { earnings: 0, deliveries: 0 },
+          total: { totalEarnings: 0, totalDeliveries: 0, totalTips: 0 },
+        },
+        performance: {
+          metrics: {
+            averageDeliveryTime: 0,
+            averageRating: 0,
+            totalDistance: 0,
+          },
+          peakHours: [],
+        },
+        payouts: [],
+        wallet: {
+          available: 0,
+          inHold: 0,
+          totalEarned: 0,
+          payoutSettings: {
+            destination: {
+              upiId: "Not set",
+            },
+          },
+        },
+      });
 
       calculateNextPayoutTime();
     } catch (error) {

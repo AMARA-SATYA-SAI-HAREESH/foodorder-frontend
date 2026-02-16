@@ -3,7 +3,6 @@ import { Category, Restaurant, Food } from "../types";
 import api from "../services/api";
 import { useCart } from "../context/CartContext";
 import {
-  Sparkles,
   UtensilsCrossed,
   Search,
   Star,
@@ -18,7 +17,6 @@ import {
   Shield,
   User,
   ShoppingBag,
-  ChevronLeft,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -393,10 +391,18 @@ const Home: React.FC = () => {
               className="group bg-white rounded-3xl shadow-lg hover:shadow-2xl border border-slate-100 overflow-hidden transition-all duration-500 hover:-translate-y-2"
             >
               <div className="relative h-48 overflow-hidden">
-                <img
+                {/* <img
                   src={food.imageUrl}
                   alt={food.title}
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                /> */}
+                <img
+                  src={food.imageUrl}
+                  alt={food.title}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src =
+                      "https://via.placeholder.com/300x200?text=Food+Image";
+                  }}
                 />
                 <div className="absolute top-4 right-4">
                   <div className="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold rounded-full">

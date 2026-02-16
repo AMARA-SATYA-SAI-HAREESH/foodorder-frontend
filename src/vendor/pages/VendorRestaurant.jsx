@@ -456,7 +456,7 @@ const VendorRestaurant = () => {
               <div className="relative aspect-video bg-gray-100 rounded-lg overflow-hidden">
                 <img
                   src={
-                    (editing ? formData.imageUrl : restaurant.imageUrl) ||
+                    (editing ? formData.imageUrl : restaurant?.imageUrl) ||
                     "https://via.placeholder.com/600x400"
                   }
                   alt="Restaurant"

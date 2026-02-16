@@ -34,18 +34,17 @@ const VendorDashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const [statsRes, ordersRes, orderStatsRes, earningsRes] =
-        await Promise.all([
-          getRestaurantStats(),
-          getTodaysOrders(),
-          getOrderStats(),
-          getEarningsSummary(),
-        ]);
+      const [statsRes, ordersRes, orderStatsRes] = await Promise.all([
+        getRestaurantStats(),
+        getTodaysOrders(),
+        getOrderStats(),
+        // getEarningsSummary(),
+      ]);
 
       if (statsRes.data?.status) setStats(statsRes.data.stats);
       if (ordersRes.data?.status) setTodaysOrders(ordersRes.data.orders || []);
       if (orderStatsRes.data?.status) setOrderStats(orderStatsRes.data.stats);
-      if (earningsRes.data?.status) setEarnings(earningsRes.data.earnings);
+      // if (earningsRes.data?.status) setEarnings(earningsRes.data.earnings);
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
       // Set default values on error
@@ -198,8 +197,8 @@ const VendorDashboard = () => {
                         order.status === "DELIVERED"
                           ? "bg-green-100 text-green-800"
                           : order.status === "PREPARING"
-                          ? "bg-blue-100 text-blue-800"
-                          : "bg-yellow-100 text-yellow-800"
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-yellow-100 text-yellow-800"
                       }`}
                     >
                       {order.status || "PENDING"}
@@ -235,10 +234,10 @@ const VendorDashboard = () => {
                       stat._id === "DELIVERED"
                         ? "bg-green-500"
                         : stat._id === "PREPARING"
-                        ? "bg-blue-500"
-                        : stat._id === "PENDING"
-                        ? "bg-yellow-500"
-                        : "bg-gray-500"
+                          ? "bg-blue-500"
+                          : stat._id === "PENDING"
+                            ? "bg-yellow-500"
+                            : "bg-gray-500"
                     }`}
                   ></div>
                   <span className="text-sm text-gray-700 truncate">

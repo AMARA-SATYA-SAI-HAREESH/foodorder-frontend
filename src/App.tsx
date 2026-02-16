@@ -239,7 +239,7 @@ import VendorOrders from "./vendor/pages/VendorOrders";
 import VendorRestaurant from "./vendor/pages/VendorRestaurant";
 import VendorEarnings from "./vendor/pages/VendorEarnings";
 import VendorProfile from "./vendor/pages/VendorProfile";
-import WithdrawalPage from "./vendor/pages/WithdrawalPage";
+// import WithdrawalPage from "./vendor/pages/WithdrawalPage";
 
 // Import Driver components
 import { DriverProvider } from "./driver/context/DriverContext";
@@ -271,6 +271,50 @@ const DriverProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+// ========== PASTE THIS RIGHT HERE AFTER IMPORTS ==========
+// Fix for "data:;base64,=" image error
+if (typeof window !== "undefined") {
+  // Store original Image constructor
+  const OriginalImage = window.Image;
+
+  // Create a new Image constructor that filters invalid src
+  const SafeImage = function (this: any, width?: number, height?: number) {
+    const img = new OriginalImage(width, height);
+
+    // Override the src setter
+    const descriptor = Object.getOwnPropertyDescriptor(img, "src");
+    if (descriptor && descriptor.set) {
+      const originalSetter = descriptor.set;
+      Object.defineProperty(img, "src", {
+        set(value) {
+          // Block the specific invalid src that causes the error
+          if (value === "data:;base64,=" || value === "") {
+            // Instead of setting invalid src, set a transparent 1x1 pixel
+            originalSetter.call(
+              this,
+              "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+            );
+            return;
+          }
+          originalSetter.call(this, value);
+        },
+        get() {
+          return descriptor.get ? descriptor.get.call(this) : "";
+        },
+        enumerable: true,
+        configurable: true,
+      });
+    }
+    return img;
+  };
+
+  // Copy prototype
+  SafeImage.prototype = OriginalImage.prototype;
+
+  // Replace global Image constructor
+  window.Image = SafeImage as any;
+}
+// ========== END OF PASTE ==========
 function App() {
   return (
     <AuthProvider>
@@ -352,7 +396,7 @@ function App() {
                         />
                         <Route path="earnings" element={<VendorEarnings />} />
                         <Route path="profile" element={<VendorProfile />} />
-                        <Route path="withdraw" element={<WithdrawalPage />} />
+
                         <Route index element={<Navigate to="dashboard" />} />
                       </Route>
 

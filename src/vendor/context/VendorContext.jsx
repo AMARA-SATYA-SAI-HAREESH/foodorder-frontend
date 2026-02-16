@@ -1,9 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
-import {
-  getVendorProfile,
-  getVendorBalance, // ADD THIS
-  getWithdrawalHistory, // ADD THIS
-} from "../api/vendorApi"; // Make sure path is correct
+import { getVendorProfile } from "../api/vendorApi"; // Make sure path is correct
 
 const VendorContext = createContext();
 
@@ -20,13 +16,6 @@ export const VendorProvider = ({ children }) => {
   const [restaurant, setRestaurant] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [vendorBalance, setVendorBalance] = useState({
-    available: 0,
-    pending: 0,
-    totalEarned: 0,
-  });
-  const [bankAccounts, setBankAccounts] = useState([]);
-  const [withdrawals, setWithdrawals] = useState([]);
 
   useEffect(() => {
     checkAuth();
@@ -46,48 +35,12 @@ export const VendorProvider = ({ children }) => {
       setIsAuthenticated(true);
 
       // Fetch balance and history after successful auth
-      await Promise.all([fetchVendorBalance(), fetchWithdrawalHistory()]);
+      // await Promise.all([fetchVendorBalance(), fetchWithdrawalHistory()]);
     } catch (error) {
       console.error("Auth check failed:", error);
       localStorage.removeItem("vendorToken");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchVendorBalance = async () => {
-    try {
-      const response = await getVendorBalance();
-      console.log("Balance Response:", response.data); // ADD THIS LINE
-
-      if (response.data?.success) {
-        setVendorBalance(
-          response.data.balance || {
-            available: 0,
-            pending: 0,
-            totalEarned: 0,
-          },
-        );
-        setBankAccounts(response.data.bankAccounts || []);
-      }
-    } catch (error) {
-      console.error("Error fetching vendor balance:", error);
-    }
-  };
-  const updateBalanceAfterWithdrawal = (withdrawalResponse) => {
-    if (withdrawalResponse?.newBalance) {
-      setVendorBalance(withdrawalResponse.newBalance);
-    }
-  };
-  const fetchWithdrawalHistory = async () => {
-    try {
-      const response = await getWithdrawalHistory();
-      if (response.data?.success) {
-        setWithdrawals(response.data.withdrawals || []);
-      }
-    } catch (error) {
-      console.error("Error fetching withdrawal history:", error);
-      setWithdrawals([]);
     }
   };
 
@@ -98,8 +51,8 @@ export const VendorProvider = ({ children }) => {
     setIsAuthenticated(true);
 
     // Fetch balance after login
-    fetchVendorBalance();
-    fetchWithdrawalHistory();
+    // fetchVendorBalance();
+    // fetchWithdrawalHistory();
   };
 
   const logout = () => {
@@ -109,13 +62,7 @@ export const VendorProvider = ({ children }) => {
     setRestaurant(null);
     setIsAuthenticated(false);
     // Reset balance state
-    setVendorBalance({
-      available: 0,
-      pending: 0,
-      totalEarned: 0,
-    });
-    setBankAccounts([]);
-    setWithdrawals([]);
+
     window.location.href = "/vendor/login";
   };
 
@@ -132,18 +79,13 @@ export const VendorProvider = ({ children }) => {
       value={{
         vendor,
         restaurant,
-        vendorBalance,
-        bankAccounts,
-        withdrawals,
+
         loading,
         isAuthenticated,
         login,
         logout,
         updateVendorData,
         updateRestaurantData,
-        fetchVendorBalance,
-        fetchWithdrawalHistory,
-        setWithdrawals,
       }}
     >
       {children}

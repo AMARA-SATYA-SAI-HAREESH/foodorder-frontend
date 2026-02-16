@@ -78,7 +78,7 @@ export const getVendorFoods = () => vendorApi.get("/foods");
 export const createVendorFood = (data) => vendorApi.post("/foods", data);
 export const updateVendorFood = (id, data) =>
   vendorApi.put(`/foods/${id}`, data);
-export const deleteVendorFood = (id) => vendorApi.delete(`/foods/${id}`);
+export const deleteVendorFood = (id) => vendorApi.delete(`/foods/?id=${id}`);
 export const toggleFoodAvailability = (id) =>
   vendorApi.put(`/foods/toggle-availability/${id}`);
 
@@ -103,20 +103,20 @@ export const getRecentTransactions = (limit = 20) =>
 // Add these functions to your vendorApi.js:
 
 // Withdrawal APIs
-export const getVendorBalance = () => vendorApi.get("/withdrawal/balance");
+// export const getVendorBalance = () => vendorApi.get("/withdrawal/balance");
 
-export const getWithdrawalHistory = () => vendorApi.get("/withdrawal/history");
+// export const getWithdrawalHistory = () => vendorApi.get("/withdrawal/history");
 
-export const requestWithdrawal = (data) =>
-  vendorApi.post("/withdrawal/request", data);
+// export const requestWithdrawal = (data) =>
+//   vendorApi.post("/withdrawal/request", data);
 
-export const addBankAccount = (data) =>
-  vendorApi.post("/withdrawal/bank-account", data);
+// export const addBankAccount = (data) =>
+//   vendorApi.post("/withdrawal/bank-account", data);
 
-export const deleteBankAccount = (accountId) =>
-  vendorApi.delete(`/withdrawal/bank-account/${accountId}`);
+// export const deleteBankAccount = (accountId) =>
+//   vendorApi.delete(`/withdrawal/bank-account/${accountId}`);
 
-export const setDefaultAccount = (accountId) =>
-  vendorApi.put(`/withdrawal/bank-account/${accountId}/default`);
+// export const setDefaultAccount = (accountId) =>
+//   vendorApi.put(`/withdrawal/bank-account/${accountId}/default`);
 
 export default vendorApi;

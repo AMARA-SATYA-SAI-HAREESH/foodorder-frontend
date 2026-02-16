@@ -52,7 +52,7 @@ const VendorEarnings = () => {
       // Use new payout API endpoints
       const [summaryRes, walletRes, payoutsRes, transactionsRes] =
         await Promise.all([
-          vendorApi.getEarningsSummary(),
+          // vendorApi.getEarningsSummary(),
           vendorApi.getWalletSummary(), // NEW: Get wallet with hold balance
           vendorApi.getPayoutHistory(), // NEW: Get auto-payout history
           vendorApi.getRecentTransactions(20),

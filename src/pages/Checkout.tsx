@@ -227,7 +227,17 @@ const Checkout: React.FC = () => {
       }
     };
   }, []);
-
+  // Add this right before the return statement
+  console.log(
+    "Cart items with images:",
+    state.items.map((item) => ({
+      id: item._id,
+      title: item.title,
+      imageUrl: item.imageUrl,
+      imageUrlType: typeof item.imageUrl,
+      imageUrlLength: item.imageUrl?.length,
+    })),
+  );
   return (
     <div className="pt-16 min-h-screen bg-gray-50 py-8">
       <div className="max-w-6xl mx-auto px-4">
@@ -465,12 +475,20 @@ const Checkout: React.FC = () => {
                     className="flex items-center justify-between pb-4 border-b border-gray-100"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-gray-100 to-orange-50 overflow-hidden">
-                        <img
-                          src={item.imageUrl}
-                          alt={item.title}
-                          className="w-full h-full object-cover"
-                        />
+                      <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-gray-100 to-orange-50 overflow-hidden flex items-center justify-center">
+                        {item.imageUrl ? (
+                          <img
+                            src={item.imageUrl}
+                            alt={item.title}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src =
+                                "https://c8.alamy.com/comp/GP452P/shopping-cart-isolated-GP452P.jpg";
+                            }}
+                          />
+                        ) : (
+                          <div className="text-2xl">🍽️</div>
+                        )}
                       </div>
                       <div>
                         <div className="font-semibold text-gray-900 line-clamp-1">

@@ -143,25 +143,22 @@ const DriverDashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const [ordersRes, earningsRes] = await Promise.all([
-        driverApi.getAvailableOrders(),
-        driverApi.getEarningsSummary(),
-      ]);
+
+      // Get available orders
+      const ordersRes = await driverApi.getAvailableOrders();
 
       if (ordersRes.data?.success) {
         setAvailableOrders(ordersRes.data.orders || []);
       }
 
-      if (earningsRes.data?.success) {
-        const earnings = earningsRes.data.summary;
-        setStats({
-          totalDeliveries: earnings.total?.totalDeliveries || 0,
-          todayDeliveries: earnings.today?.deliveries || 0,
-          totalEarnings: earnings.total?.totalEarnings || 0,
-          todayEarnings: earnings.today?.earnings || 0,
-          rating: 4.5, // Would come from backend
-        });
-      }
+      // Set default stats (earnings API is commented out)
+      setStats({
+        totalDeliveries: 0,
+        todayDeliveries: 0,
+        totalEarnings: 0,
+        todayEarnings: 0,
+        rating: 4.5,
+      });
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
     } finally {

@@ -39,7 +39,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
 
     case "ADD_ITEM":
       const existingItem = state.items.find(
-        (item) => item._id === action.payload._id
+        (item) => item._id === action.payload._id,
       );
       let newItems: CartItem[];
 
@@ -47,7 +47,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
         newItems = state.items.map((item) =>
           item._id === action.payload._id
             ? { ...item, quantity: item.quantity + 1 }
-            : item
+            : item,
         );
       } else {
         newItems = [...state.items, { ...action.payload, quantity: 1 }];
@@ -59,7 +59,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
         totalItems: newItems.reduce((sum, item) => sum + item.quantity, 0),
         totalAmount: newItems.reduce(
           (sum, item) => sum + item.price * item.quantity,
-          0
+          0,
         ),
       };
 
@@ -68,7 +68,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
         .map((item) =>
           item._id === action.payload.foodId
             ? { ...item, quantity: action.payload.quantity }
-            : item
+            : item,
         )
         .filter((item) => item.quantity > 0);
 
@@ -78,13 +78,13 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
         totalItems: updatedItems.reduce((sum, item) => sum + item.quantity, 0),
         totalAmount: updatedItems.reduce(
           (sum, item) => sum + item.price * item.quantity,
-          0
+          0,
         ),
       };
 
     case "REMOVE_ITEM":
       const filteredItems = state.items.filter(
-        (item) => item._id !== action.payload
+        (item) => item._id !== action.payload,
       );
       return {
         ...state,
@@ -92,7 +92,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
         totalItems: filteredItems.reduce((sum, item) => sum + item.quantity, 0),
         totalAmount: filteredItems.reduce(
           (sum, item) => sum + item.price * item.quantity,
-          0
+          0,
         ),
       };
 
@@ -105,11 +105,11 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
         items: action.payload,
         totalItems: action.payload.reduce(
           (sum, item) => sum + item.quantity,
-          0
+          0,
         ),
         totalAmount: action.payload.reduce(
           (sum, item) => sum + item.price * item.quantity,
-          0
+          0,
         ),
       };
 
@@ -175,9 +175,18 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
 
   const addToCart = (food: Food) => {
     console.log("Adding to cart:", food);
-    dispatch({ type: "ADD_ITEM", payload: food });
-  };
 
+    // ✅ Create a safe copy with validated imageUrl
+    const safeFood = {
+      ...food,
+      imageUrl:
+        food.imageUrl && food.imageUrl.startsWith("http")
+          ? food.imageUrl
+          : "https://c8.alamy.com/comp/GP452P/shopping-cart-isolated-GP452P.jpg",
+    };
+
+    dispatch({ type: "ADD_ITEM", payload: safeFood });
+  };
   const updateQuantity = (foodId: string, quantity: number) => {
     dispatch({ type: "UPDATE_QUANTITY", payload: { foodId, quantity } });
   };
@@ -254,7 +263,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
           price: item.price,
           restaurantId: item.restaurantId,
           hasRestaurantId: !!item.restaurantId,
-        }))
+        })),
       );
 
       // Check for missing restaurantId
@@ -262,7 +271,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
       if (invalidItems.length > 0) {
         console.error("❌ Items missing restaurantId:", invalidItems);
         alert(
-          "Some items are missing restaurant information. Please remove and re-add them."
+          "Some items are missing restaurant information. Please remove and re-add them.",
         );
         return null;
       }
@@ -278,7 +287,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
       if (restaurantIds.length > 1) {
         console.error("❌ Multiple restaurants in cart:", restaurantIds);
         alert(
-          "Cannot order from multiple restaurants at once. Please order from one restaurant at a time."
+          "Cannot order from multiple restaurants at once. Please order from one restaurant at a time.",
         );
         return null;
       }
@@ -337,7 +346,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
       // 7. Success
       console.log(
         "🎉 Order created successfully! Order ID:",
-        response.data.order._id
+        response.data.order._id,
       );
 
       // Clear cart
@@ -347,7 +356,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
       alert(
         `Order #${
           response.data.order._id?.slice(-6) || ""
-        } placed successfully!`
+        } placed successfully!`,
       );
 
       dispatch({ type: "LOADING", payload: false });

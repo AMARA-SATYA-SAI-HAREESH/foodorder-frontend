@@ -43,7 +43,7 @@ export interface Food {
   description: string;
   price: number;
   foodTags: string[];
-  imageUrl: string;
+  imageUrl?: string;
   categoryId: string; // ref: Category
   code?: string;
   isAvailable: boolean;

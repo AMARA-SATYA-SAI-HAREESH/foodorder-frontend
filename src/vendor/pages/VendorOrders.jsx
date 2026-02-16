@@ -32,10 +32,6 @@ const VendorOrders = () => {
   // ✅ NEW STATE FOR QR MODAL
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showQRModal, setShowQRModal] = useState(false);
-  // useEffect(() => {
-  //   fetchOrders();
-  //   fetchStats();
-  // }, [page, statusFilter]);
 
   const fetchOrders = useCallback(async () => {
     try {
