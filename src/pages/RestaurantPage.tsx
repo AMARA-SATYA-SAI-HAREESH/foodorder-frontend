@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { ImageComponent } from "../utils/imageHelper";
 import {
   ArrowLeft,
@@ -20,7 +20,7 @@ const RestaurantPage = () => {
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [foods, setFoods] = useState<Food[]>([]);
   const [loading, setLoading] = useState(true);
-
+  const navigate = useNavigate();
   useEffect(() => {
     if (!id) return;
 
@@ -31,7 +31,7 @@ const RestaurantPage = () => {
         setRestaurant(restRes.data.restaurant);
 
         const foodsRes = await api.get(
-          `/api/food/getFoodsbyrestaurant?id=${id}`
+          `/api/food/getFoodsbyrestaurant?id=${id}`,
         );
         console.log("Foods:", foodsRes.data);
         setFoods(foodsRes.data.foods || []);
@@ -262,11 +262,14 @@ const RestaurantPage = () => {
                         ₹{food.price}
                       </div>
                       <button
-                        onClick={() => addToCart(food)}
+                        onClick={() => {
+                          addToCart(food);
+                          navigate("/cart"); // Navigate to cart page after adding
+                        }}
                         className="text-xs bg-gradient-to-r from-orange-500 to-red-500 text-white px-3 py-1.5 rounded-lg font-bold hover:shadow-sm transition-shadow flex items-center gap-1"
                       >
                         <ShoppingCart className="w-3 h-3" />
-                        ADD
+                        ADD TO CART
                       </button>
                     </div>
                   </div>

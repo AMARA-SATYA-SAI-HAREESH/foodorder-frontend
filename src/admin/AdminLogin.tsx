@@ -30,18 +30,19 @@ const AdminLogin: React.FC = () => {
         setError("Access denied. Admin privileges required.");
         return;
       }
-
-      // Store token
+      // Store token and admin data
       const token = response.token;
       if (token) {
-        login(token);
-        navigate("/admin");
+        login(token, response.user);
+        navigate("/admin/dashboard");
       } else {
         setError("Token not found in response");
       }
     } catch (err: any) {
       setError(
-        err.response?.data?.message || "Login failed. Check credentials."
+        err.response?.data?.message ||
+          err.message ||
+          "Login failed. Check credentials.",
       );
     } finally {
       setLoading(false);

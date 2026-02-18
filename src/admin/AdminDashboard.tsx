@@ -14,6 +14,7 @@ import {
   Save,
   X,
 } from "lucide-react";
+import ImageUploader from "../components/ImageUploader";
 import {
   getAllCategories,
   createCategory,
@@ -196,7 +197,7 @@ const AdminDashboard: React.FC = () => {
           } catch (orderError: any) {
             console.error(
               "Orders API failed:",
-              orderError.response?.data || orderError.message
+              orderError.response?.data || orderError.message,
             );
           }
           break;
@@ -459,13 +460,13 @@ const AdminDashboard: React.FC = () => {
   const handleDriverDelete = async (driverId: string) => {
     if (
       window.confirm(
-        "Are you sure you want to delete this driver? This will also delete their user account."
+        "Are you sure you want to delete this driver? This will also delete their user account.",
       )
     ) {
       try {
         const reason = prompt("Enter reason for deletion (optional):");
         await deleteDriver(driverId, reason || "Admin deletion");
-        fetchData();
+        await fetchData();
         alert("Driver deleted successfully");
       } catch (error) {
         console.error("Error deleting driver:", error);
@@ -476,7 +477,7 @@ const AdminDashboard: React.FC = () => {
 
   const handleVerificationUpdate = async (
     driverId: string,
-    newStatus: string
+    newStatus: string,
   ) => {
     try {
       await updateDriverVerification(driverId, newStatus);
@@ -493,7 +494,7 @@ const AdminDashboard: React.FC = () => {
   // Order status handler
   const handleOrderStatusChange = async (
     orderId: string,
-    newStatus: string
+    newStatus: string,
   ) => {
     try {
       await changeOrderStatus(orderId, newStatus);
@@ -526,7 +527,7 @@ const AdminDashboard: React.FC = () => {
     return (
       <span
         className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
-          status
+          status,
         )}`}
       >
         {status}
@@ -839,7 +840,7 @@ const AdminDashboard: React.FC = () => {
                     <p className="text-xl font-bold text-blue-600">
                       {
                         data.drivers.filter(
-                          (d) => d.verificationStatus === "APPROVED"
+                          (d) => d.verificationStatus === "APPROVED",
                         ).length
                       }
                     </p>
@@ -849,7 +850,7 @@ const AdminDashboard: React.FC = () => {
                     <p className="text-xl font-bold text-yellow-600">
                       {
                         data.drivers.filter(
-                          (d) => d.verificationStatus === "PENDING"
+                          (d) => d.verificationStatus === "PENDING",
                         ).length
                       }
                     </p>
@@ -962,10 +963,11 @@ const AdminDashboard: React.FC = () => {
                                     driver.verificationStatus === "APPROVED"
                                       ? "bg-green-100 text-green-800"
                                       : driver.verificationStatus === "PENDING"
-                                      ? "bg-yellow-100 text-yellow-800"
-                                      : driver.verificationStatus === "REJECTED"
-                                      ? "bg-red-100 text-red-800"
-                                      : "bg-gray-100 text-gray-800"
+                                        ? "bg-yellow-100 text-yellow-800"
+                                        : driver.verificationStatus ===
+                                            "REJECTED"
+                                          ? "bg-red-100 text-red-800"
+                                          : "bg-gray-100 text-gray-800"
                                   }`}
                                 >
                                   {driver.verificationStatus || "N/A"}
@@ -978,7 +980,7 @@ const AdminDashboard: React.FC = () => {
                                       onClick={() =>
                                         handleVerificationUpdate(
                                           driver._id,
-                                          "APPROVED"
+                                          "APPROVED",
                                         )
                                       }
                                       className="text-xs text-green-600 hover:text-green-800"
@@ -991,7 +993,7 @@ const AdminDashboard: React.FC = () => {
                                       onClick={() =>
                                         handleVerificationUpdate(
                                           driver._id,
-                                          "REJECTED"
+                                          "REJECTED",
                                         )
                                       }
                                       className="text-xs text-red-600 hover:text-red-800"
@@ -1004,7 +1006,7 @@ const AdminDashboard: React.FC = () => {
                                       onClick={() =>
                                         handleVerificationUpdate(
                                           driver._id,
-                                          "PENDING"
+                                          "PENDING",
                                         )
                                       }
                                       className="text-xs text-yellow-600 hover:text-yellow-800"
@@ -1534,7 +1536,7 @@ Total Earnings: ₹${driver.totalEarnings || 0}`);
                                 <p className="text-sm text-gray-600">
                                   ₹{order.totalAmount} ·{" "}
                                   {new Date(
-                                    order.createdAt
+                                    order.createdAt,
                                   ).toLocaleDateString()}
                                 </p>
                               </div>

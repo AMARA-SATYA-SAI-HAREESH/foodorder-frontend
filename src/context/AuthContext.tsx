@@ -37,19 +37,24 @@ interface AuthState {
 interface AuthContextType {
   user: User | null;
   token: string | null;
-  login: (email: string, password: string) => Promise<boolean>;
+  userType: string | null;
+  login: (
+    email: string,
+    password: string,
+    captchaToken?: string,
+  ) => Promise<boolean>;
   register: (
     userName: string,
     email: string,
     password: string,
     address: string,
     phone: string,
-    answer: string
+    answer: string,
   ) => Promise<boolean>;
   logout: () => void;
   updatePassword: (
     oldPassword: string,
-    newPassword: string
+    newPassword: string,
   ) => Promise<boolean>;
 }
 
@@ -106,18 +111,53 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   //       return false;
   //     }
   //   };
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (
+    email: string,
+    password: string,
+    captchaToken?: string,
+  ): Promise<boolean> => {
     try {
-      const response = await api.post("/user/login", { email, password });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      const response = await api.post(
+        "/user/login",
+        {
+          email,
+          password,
+          captchaToken,
+        },
+        {
+          signal: controller.signal,
+        },
+      );
+
+      clearTimeout(timeoutId);
 
       if (response.data?.token && response.data?.user) {
-        // ✅ data.token
         saveAuth(response.data.token, response.data.user);
+        // ✅ ADD THESE LINES - AUTO REDIRECT BASED ON USER TYPE
+        const userType = response.data.user.userType;
+
+        setTimeout(() => {
+          if (userType === "vendor") {
+            window.location.href = "/vendor/dashboard";
+          } else if (userType === "driver") {
+            window.location.href = "/driver/dashboard";
+          } else if (userType === "admin") {
+            window.location.href = "/admin";
+          } else {
+            window.location.href = "/";
+          }
+        }, 100);
+
         return true;
       }
       return false;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login error:", error);
+      if (error.name === "AbortError" || error.code === "ECONNABORTED") {
+        console.error("Login timeout - please try again");
+      }
       return false;
     }
   };
@@ -128,7 +168,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     password: string,
     address: string,
     phone: string,
-    answer: string
+    answer: string,
   ) => {
     try {
       const response = await api.post("/user/register", {
@@ -155,7 +195,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   const updatePassword = async (
     oldPassword: string,
-    newPassword: string
+    newPassword: string,
   ): Promise<boolean> => {
     if (!auth.token) return false;
 
@@ -186,6 +226,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const value: AuthContextType = {
     user: auth.user, // ✅ Direct user
     token: auth.token, // Direct token
+    userType: auth.user?.userType || null,
     login,
     register,
     logout,

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Category, Restaurant, Food } from "../types";
 import api from "../services/api";
 import { useCart } from "../context/CartContext";
+import { getCachedData, setCachedData } from "../utils/cacheUtils";
 import {
   UtensilsCrossed,
   Search,
@@ -36,21 +37,45 @@ const Home: React.FC = () => {
   useEffect(() => {
     const fetchAll = async () => {
       try {
+        // Try to get from cache first
+        const cachedCategories = getCachedData("home_categories");
+        const cachedRestaurants = getCachedData("home_restaurants");
+        const cachedFoods = getCachedData("home_foods");
+
+        if (cachedCategories && cachedRestaurants && cachedFoods) {
+          console.log("📦 Using cached data");
+          setCategories(cachedCategories);
+          setRestaurants(cachedRestaurants);
+          setFoods(cachedFoods);
+          setLoading(false);
+          return;
+        }
+
+        console.log("🌐 Fetching fresh data");
         const [catRes, restRes, foodRes] = await Promise.all([
           api.get("/catogary/getAllCategories"),
           api.get("/restaurant/getAllRestaurants"),
           api.get("/api/food/getAllFoods"),
         ]);
 
-        setCategories(
-          Array.isArray(catRes.data?.categories) ? catRes.data.categories : [],
-        );
-        setRestaurants(
-          Array.isArray(restRes.data?.restaurants)
-            ? restRes.data.restaurants
-            : [],
-        );
-        setFoods(Array.isArray(foodRes.data?.foods) ? foodRes.data.foods : []);
+        const categoriesData = Array.isArray(catRes.data?.categories)
+          ? catRes.data.categories
+          : [];
+        const restaurantsData = Array.isArray(restRes.data?.restaurants)
+          ? restRes.data.restaurants
+          : [];
+        const foodsData = Array.isArray(foodRes.data?.foods)
+          ? foodRes.data.foods
+          : [];
+
+        // Save to cache
+        setCachedData("home_categories", categoriesData);
+        setCachedData("home_restaurants", restaurantsData);
+        setCachedData("home_foods", foodsData);
+
+        setCategories(categoriesData);
+        setRestaurants(restaurantsData);
+        setFoods(foodsData);
       } catch (err) {
         console.error("Home fetch error:", err);
       } finally {
@@ -294,6 +319,7 @@ const Home: React.FC = () => {
           {restaurants.slice(0, 6).map((restaurant) => (
             <div
               key={restaurant._id}
+              onClick={() => navigate(`/restaurant/${restaurant._id}`)}
               className="group bg-white rounded-3xl shadow-lg hover:shadow-2xl border border-slate-100 overflow-hidden transition-all duration-500 hover:-translate-y-2"
             >
               <div className="relative h-48 overflow-hidden">
@@ -347,7 +373,10 @@ const Home: React.FC = () => {
                 </div>
 
                 <button
-                  onClick={() => navigate(`/restaurant/${restaurant._id}`)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/restaurant/${restaurant._id}`);
+                  }}
                   className="w-full py-3 bg-gradient-to-r from-slate-50 to-emerald-50 text-slate-900 font-semibold rounded-xl border border-emerald-200 hover:border-emerald-500 transition-colors group-hover:bg-gradient-to-r group-hover:from-emerald-500 group-hover:to-teal-600 group-hover:text-white"
                 >
                   View Menu
@@ -388,6 +417,7 @@ const Home: React.FC = () => {
           {filteredFoods.slice(0, 8).map((food) => (
             <div
               key={food._id}
+              onClick={() => navigate(`/food/${food._id}`)}
               className="group bg-white rounded-3xl shadow-lg hover:shadow-2xl border border-slate-100 overflow-hidden transition-all duration-500 hover:-translate-y-2"
             >
               <div className="relative h-48 overflow-hidden">
@@ -441,7 +471,9 @@ const Home: React.FC = () => {
                   <button
                     onClick={(e) => {
                       e.preventDefault();
+                      e.stopPropagation(); // Prevent card navigation
                       addToCart(food);
+                      navigate("/cart"); // Navigate to cart page
                     }}
                     className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold rounded-xl hover:shadow-lg transition-all duration-300 hover:scale-105"
                   >

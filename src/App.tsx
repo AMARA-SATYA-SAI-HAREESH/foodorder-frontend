@@ -227,6 +227,8 @@ import SearchPage from "./pages/SearchPage";
 import AllFoods from "./pages/AllFoods";
 import AdminRoutes from "./admin/AdminRoutes";
 import { AdminAuthProvider } from "./admin/AdminContext";
+import { useRateLimit } from "./utils/useRateLimit";
+import RateLimitMessage from "./components/RateLimitMessage";
 
 // Import Vendor components
 import { VendorProvider } from "./vendor/context/VendorContext";
@@ -316,6 +318,7 @@ if (typeof window !== "undefined") {
 }
 // ========== END OF PASTE ==========
 function App() {
+  const { isRateLimited, retryAfter } = useRateLimit();
   return (
     <AuthProvider>
       <SocketProvider>
@@ -326,6 +329,10 @@ function App() {
               {/* Wrap everything with DriverProvider */}
               <Router>
                 <CartProvider>
+                  <RateLimitMessage
+                    isVisible={isRateLimited}
+                    retryAfter={retryAfter}
+                  />
                   <div className="App min-h-screen bg-gray-50">
                     <Routes>
                       {/* User Routes with Header */}

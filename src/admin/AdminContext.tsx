@@ -9,12 +9,13 @@ import React, {
 interface AdminAuthContextType {
   isAdmin: boolean;
   token: string | null;
-  login: (token: string) => void;
+  admin: any | null;
+  login: (token: string, adminData: any) => void;
   logout: () => void;
 }
 
 const AdminAuthContext = createContext<AdminAuthContextType | undefined>(
-  undefined
+  undefined,
 );
 
 export const useAdminAuth = () => {
@@ -25,42 +26,43 @@ export const useAdminAuth = () => {
   return context;
 };
 
-interface AdminAuthProviderProps {
-  children: ReactNode;
-}
-
-export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({
+export const AdminAuthProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [token, setToken] = useState<string | null>(
-    localStorage.getItem("adminToken")
+    localStorage.getItem("adminToken"),
   );
+  const [admin, setAdmin] = useState<any | null>(null);
 
   useEffect(() => {
-    // Check if token exists and is valid
     const storedToken = localStorage.getItem("adminToken");
-    if (storedToken) {
-      // Optional: Validate token with backend
+    const storedAdmin = localStorage.getItem("admin");
+    if (storedToken && storedAdmin) {
       setToken(storedToken);
+      setAdmin(JSON.parse(storedAdmin));
       setIsAdmin(true);
     }
   }, []);
 
-  const login = (newToken: string) => {
+  const login = (newToken: string, adminData: any) => {
     localStorage.setItem("adminToken", newToken);
+    localStorage.setItem("admin", JSON.stringify(adminData));
     setToken(newToken);
+    setAdmin(adminData);
     setIsAdmin(true);
   };
 
   const logout = () => {
     localStorage.removeItem("adminToken");
+    localStorage.removeItem("admin");
     setToken(null);
+    setAdmin(null);
     setIsAdmin(false);
   };
 
   return (
-    <AdminAuthContext.Provider value={{ isAdmin, token, login, logout }}>
+    <AdminAuthContext.Provider value={{ isAdmin, token, admin, login, logout }}>
       {children}
     </AdminAuthContext.Provider>
   );

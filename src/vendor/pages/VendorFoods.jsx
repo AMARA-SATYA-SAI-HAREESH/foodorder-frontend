@@ -5,6 +5,8 @@ import {
   Utensils, // Add this
 } from "lucide-react";
 import { IMAGE_URLS } from "../utils/imageUrls";
+import ImageUploader from "../../components/ImageUploader";
+import api from "../../services/api";
 import {
   Plus,
   Edit2,
@@ -32,6 +34,7 @@ const VendorFoods = () => {
   const [editingId, setEditingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterAvailable, setFilterAvailable] = useState("all");
+  const [categories, setCategories] = useState([]);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -45,7 +48,21 @@ const VendorFoods = () => {
     isAvailable: true,
     rating: "5",
   });
+  // Add this useEffect
+  useEffect(() => {
+    fetchCategories();
+  }, []);
 
+  const fetchCategories = async () => {
+    try {
+      const response = await api.get("/catogary/getAllCategories");
+      if (response.data?.categories) {
+        setCategories(response.data.categories);
+      }
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
   useEffect(() => {
     fetchFoods();
   }, []);
@@ -114,8 +131,8 @@ const VendorFoods = () => {
       // Update local state
       setFoods(
         foods.map((food) =>
-          food._id === id ? { ...food, isAvailable: !currentStatus } : food
-        )
+          food._id === id ? { ...food, isAvailable: !currentStatus } : food,
+        ),
       );
     } catch (error) {
       console.error("Error toggling availability:", error);
@@ -147,8 +164,8 @@ const VendorFoods = () => {
       filterAvailable === "all"
         ? true
         : filterAvailable === "available"
-        ? food.isAvailable
-        : !food.isAvailable;
+          ? food.isAvailable
+          : !food.isAvailable;
     return matchesSearch && matchesFilter;
   });
 
@@ -296,21 +313,24 @@ const VendorFoods = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Category ID *
+                  Category *
                 </label>
-                <input
-                  type="text"
+                <select
                   value={formData.categoryId}
                   onChange={(e) =>
                     setFormData({ ...formData, categoryId: e.target.value })
                   }
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter category ID"
                   required
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Get category ID from Categories page
-                </p>
+                >
+                  <option value="">Select a category</option>
+                  {/* You need to fetch categories first */}
+                  {categories.map((category) => (
+                    <option key={category._id} value={category._id}>
+                      {category.title}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
@@ -332,7 +352,7 @@ const VendorFoods = () => {
                 </select>
               </div>
 
-              <div className="md:col-span-2">
+              {/* <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Image URL
                 </label>
@@ -372,7 +392,23 @@ const VendorFoods = () => {
                     />
                   </div>
                 </div>
-              )}
+              )} */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Food Image
+                </label>
+                <ImageUploader
+                  onUploadComplete={(url) => {
+                    setFormData({ ...formData, imageUrl: url });
+                  }}
+                  currentImage={formData.imageUrl}
+                  buttonText="Upload Food Image"
+                  folder="foods"
+                />
+                <p className="text-xs text-gray-500 mt-2">
+                  Upload or drag & drop your food image (PNG, JPG up to 5MB)
+                </p>
+              </div>
 
               <div className="md:col-span-2">
                 <label className="flex items-center gap-3">

@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import { useVendor } from "../context/VendorContext";
+import ImageUploader from "../../components/ImageUploader";
 import { updateRestaurantDetails, getRestaurantStats } from "../api/vendorApi";
 
 const VendorRestaurant = () => {
@@ -85,18 +86,6 @@ const VendorRestaurant = () => {
       alert("Failed to update restaurant details");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleImageUpload = (type) => {
-    // For demo purposes - in real app, you'd upload to cloud storage
-    const url = prompt(`Enter ${type} URL:`);
-    if (url) {
-      if (type === "logo") {
-        setFormData({ ...formData, logoUrl: url });
-      } else {
-        setFormData({ ...formData, imageUrl: url });
-      }
     }
   };
 
@@ -452,42 +441,27 @@ const VendorRestaurant = () => {
             <h3 className="text-sm font-medium text-gray-900 mb-4">
               Restaurant Image
             </h3>
-            <div className="space-y-4">
+            {editing ? (
+              <ImageUploader
+                onUploadComplete={(url) => {
+                  setFormData({ ...formData, imageUrl: url });
+                }}
+                currentImage={formData.imageUrl}
+                buttonText="Upload Restaurant Image"
+                folder="restaurants"
+              />
+            ) : (
               <div className="relative aspect-video bg-gray-100 rounded-lg overflow-hidden">
                 <img
                   src={
-                    (editing ? formData.imageUrl : restaurant?.imageUrl) ||
+                    restaurant?.imageUrl ||
                     "https://via.placeholder.com/600x400"
                   }
                   alt="Restaurant"
                   className="w-full h-full object-cover"
                 />
-                {editing && (
-                  <button
-                    onClick={() => handleImageUpload("restaurant")}
-                    className="absolute bottom-3 right-3 bg-black bg-opacity-50 text-white p-2 rounded-lg hover:bg-opacity-70"
-                  >
-                    <Upload className="w-4 h-4" />
-                  </button>
-                )}
               </div>
-              {editing && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Image URL
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.imageUrl}
-                    onChange={(e) =>
-                      setFormData({ ...formData, imageUrl: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                    placeholder="Enter image URL"
-                  />
-                </div>
-              )}
-            </div>
+            )}
           </div>
 
           {/* Logo */}
@@ -495,11 +469,20 @@ const VendorRestaurant = () => {
             <h3 className="text-sm font-medium text-gray-900 mb-4">
               Restaurant Logo
             </h3>
-            <div className="space-y-4">
+            {editing ? (
+              <ImageUploader
+                onUploadComplete={(url) => {
+                  setFormData({ ...formData, logoUrl: url });
+                }}
+                currentImage={formData.logoUrl}
+                buttonText="Upload Logo"
+                folder="logos"
+              />
+            ) : (
               <div className="w-32 h-32 mx-auto bg-gray-100 rounded-xl overflow-hidden flex items-center justify-center">
-                {restaurant.logoUrl || formData.logoUrl ? (
+                {restaurant.logoUrl ? (
                   <img
-                    src={editing ? formData.logoUrl : restaurant.logoUrl}
+                    src={restaurant.logoUrl}
                     alt="Logo"
                     className="w-full h-full object-contain p-2"
                   />
@@ -507,18 +490,7 @@ const VendorRestaurant = () => {
                   <ImageIcon className="w-12 h-12 text-gray-400" />
                 )}
               </div>
-              {editing && (
-                <div>
-                  <button
-                    onClick={() => handleImageUpload("logo")}
-                    className="w-full py-2.5 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-blue-500 hover:text-blue-500"
-                  >
-                    <Upload className="w-4 h-4 inline mr-2" />
-                    Upload New Logo
-                  </button>
-                </div>
-              )}
-            </div>
+            )}
           </div>
 
           {/* Quick Stats */}

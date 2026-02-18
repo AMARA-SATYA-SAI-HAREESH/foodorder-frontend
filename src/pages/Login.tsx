@@ -1,31 +1,53 @@
-import React, { useState } from "react";
+// src/pages/Login.tsx
+import React, { useState, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { Lock, Mail, User, Loader2 } from "lucide-react";
+import { Lock, Mail, User, Loader2, Shield } from "lucide-react";
+import ReCAPTCHA from "react-google-recaptcha";
 
 const Login: React.FC = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
+
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  const handleCaptchaChange = (token: string | null) => {
+    setCaptchaToken(token);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!captchaToken) {
+      setError("Please complete the CAPTCHA verification");
+      return;
+    }
+
     setError(null);
     setLoading(true);
-    const ok = await login(form.email, form.password);
+
+    const ok = await login(form.email, form.password, captchaToken);
     setLoading(false);
+
+    // Reset CAPTCHA after attempt
+    recaptchaRef.current?.reset();
+    setCaptchaToken(null);
 
     if (!ok) {
       setError("Invalid credentials or server error.");
       return;
     }
-    navigate("/");
+
+    // Show success message
+    // toast.success("Login successful! Redirecting...");
   };
 
   return (
@@ -92,9 +114,23 @@ const Login: React.FC = () => {
             </div>
           </div>
 
+          {/* Google reCAPTCHA */}
+          <div className="flex justify-center my-4">
+            <ReCAPTCHA
+              ref={recaptchaRef}
+              sitekey={
+                process.env.REACT_APP_RECAPTCHA_SITE_KEY ||
+                "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"
+              } // Test key for development
+              onChange={handleCaptchaChange}
+              theme="light"
+              size="normal"
+            />
+          </div>
+
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !captchaToken}
             className="w-full mt-2 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-pink-500 text-white text-sm font-semibold shadow-lg hover:shadow-xl disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {loading ? (
@@ -103,7 +139,10 @@ const Login: React.FC = () => {
                 Signing in...
               </>
             ) : (
-              <>Sign in</>
+              <>
+                <Shield className="w-4 h-4" />
+                Sign in with Verification
+              </>
             )}
           </button>
         </form>
