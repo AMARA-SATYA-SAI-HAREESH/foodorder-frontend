@@ -117,7 +117,7 @@ const DriverDashboard = () => {
 
       if (result.success) {
         console.log("✅ OTP generated:", result.otp);
-        alert(`OTP sent to customer: ${result.otp}`); // For testing
+        // alert(`OTP sent to customer: ${result.otp}`); // For testing
         setShowOTPVerification(true);
       } else {
         alert("Failed to generate OTP: " + result.message);
