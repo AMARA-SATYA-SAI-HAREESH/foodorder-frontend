@@ -756,23 +756,22 @@ const AdminDashboard: React.FC = () => {
                           required
                         />
                       </div>
-                      <div>
+                      <div className="md:col-span-2">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Image URL
+                          Category Image
                         </label>
-                        <input
-                          type="text"
-                          value={categoryForm.imageUrl}
-                          onChange={(e) =>
-                            setCategoryForm({
-                              ...categoryForm,
-                              imageUrl: e.target.value,
-                            })
-                          }
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                          placeholder="https://example.com/image.jpg"
-                          required
+                        <ImageUploader
+                          onUploadComplete={(url: string) => {
+                            setCategoryForm({ ...categoryForm, imageUrl: url });
+                          }}
+                          currentImage={categoryForm.imageUrl}
+                          buttonText="Upload Category Image"
+                          folder="categories"
                         />
+                        <p className="text-xs text-gray-500 mt-2">
+                          Upload or drag & drop your category image (PNG, JPG up
+                          to 5MB)
+                        </p>
                       </div>
                       {categoryForm.imageUrl && (
                         <div className="mb-4">
@@ -1192,23 +1191,22 @@ Total Earnings: ₹${driver.totalEarnings || 0}`);
                           required
                         />
                       </div>
-                      <div>
+                      <div className="md:col-span-2">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Image URL
+                          Food Image
                         </label>
-                        <input
-                          type="text"
-                          value={foodForm.imageUrl}
-                          onChange={(e) =>
-                            setFoodForm({
-                              ...foodForm,
-                              imageUrl: e.target.value,
-                            })
-                          }
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                          placeholder="https://example.com/image.jpg"
-                          required
+                        <ImageUploader
+                          onUploadComplete={(url: string) => {
+                            setFoodForm({ ...foodForm, imageUrl: url });
+                          }}
+                          currentImage={foodForm.imageUrl}
+                          buttonText="Upload Food Image"
+                          folder="foods"
                         />
+                        <p className="text-xs text-gray-500 mt-2">
+                          Upload or drag & drop your food image (PNG, JPG up to
+                          5MB)
+                        </p>
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1414,23 +1412,25 @@ Total Earnings: ₹${driver.totalEarnings || 0}`);
                           required
                         />
                       </div>
-                      <div>
+                      <div className="md:col-span-2">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Image URL
+                          Restaurant Image
                         </label>
-                        <input
-                          type="text"
-                          value={restaurantForm.imageUrl}
-                          onChange={(e) =>
+                        <ImageUploader
+                          onUploadComplete={(url: string) => {
                             setRestaurantForm({
                               ...restaurantForm,
-                              imageUrl: e.target.value,
-                            })
-                          }
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                          placeholder="https://example.com/image.jpg"
-                          required
+                              imageUrl: url,
+                            });
+                          }}
+                          currentImage={restaurantForm.imageUrl}
+                          buttonText="Upload Restaurant Image"
+                          folder="restaurants"
                         />
+                        <p className="text-xs text-gray-500 mt-2">
+                          Upload or drag & drop your restaurant image (PNG, JPG
+                          up to 5MB)
+                        </p>
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
