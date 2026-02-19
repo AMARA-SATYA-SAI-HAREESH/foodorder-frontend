@@ -348,7 +348,7 @@ const Register: React.FC = () => {
               {otpLoading ? (
                 <span className="flex items-center justify-center gap-2">
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  Sending OTP...
+                  Sending OTP..
                 </span>
               ) : (
                 <span className="flex items-center justify-center gap-2">
