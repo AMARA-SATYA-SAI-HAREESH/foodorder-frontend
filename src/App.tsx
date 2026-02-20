@@ -319,6 +319,20 @@ if (typeof window !== "undefined") {
 // ========== END OF PASTE ==========
 function App() {
   const { isRateLimited, retryAfter } = useRateLimit();
+  // ✅ ADD THIS - Wake up backend when app loads
+  React.useEffect(() => {
+    // Wake up backend (Render free tier spins down)
+    fetch(`${process.env.REACT_APP_API_URL}/api/health`)
+      .then((res) => {
+        if (res.ok) {
+          console.log("✅ Backend is awake");
+        }
+      })
+      .catch((err) => {
+        console.log("⏳ Backend waking up... (this is normal)");
+      });
+  }, []);
+
   return (
     <AuthProvider>
       <SocketProvider>

@@ -80,13 +80,17 @@ const Register: React.FC = () => {
   };
 
   const handleSendOTP = async () => {
-    // Validate email
     if (!validateEmail(formData.email)) {
       setEmailError("Please enter a valid email address");
       return;
     }
 
     setOtpLoading(true);
+
+    // ✅ ADD TIMEOUT - 15 seconds max
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
     try {
       const response = await fetch(
         `${process.env.REACT_APP_API_URL}/api/otp/send`,
@@ -94,16 +98,16 @@ const Register: React.FC = () => {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: formData.email }),
+          signal: controller.signal, // ✅ ADD THIS
         },
       );
 
+      clearTimeout(timeoutId);
       const data = await response.json();
 
-      // ✅ Enhanced rate limiting - read Retry-After header
       if (response.status === 429) {
         const retryAfter = response.headers.get("Retry-After");
         const minutes = retryAfter ? Math.ceil(parseInt(retryAfter) / 60) : 15;
-
         toast.error(
           `⏱️ Too many OTP requests. Please try again after ${minutes} minute${minutes > 1 ? "s" : ""}.`,
         );
@@ -117,8 +121,18 @@ const Register: React.FC = () => {
       } else {
         toast.error(data.message || "Failed to send OTP");
       }
-    } catch (error) {
-      toast.error("Network error. Please try again.");
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+
+      // ✅ HANDLE TIMEOUT SPECIFICALLY
+      if (error.name === "AbortError") {
+        toast.error(
+          "Request timed out. Backend is waking up. Please try again.",
+        );
+      } else {
+        toast.error("Network error. Please try again.");
+      }
+      console.error("OTP error:", error);
     } finally {
       setOtpLoading(false);
     }
