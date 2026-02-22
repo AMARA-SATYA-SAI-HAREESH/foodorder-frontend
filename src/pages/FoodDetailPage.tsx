@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import toast, { Toaster } from "react-hot-toast";
 import {
   ArrowLeft,
   Star,
@@ -35,7 +36,7 @@ const FoodDetailPage = () => {
         // 2. Get restaurant details
         if (foodRes.data.food?.restaurantId) {
           const restRes = await api.get(
-            `/restaurant/getRestaurant?id=${foodRes.data.food.restaurantId}`
+            `/restaurant/getRestaurant?id=${foodRes.data.food.restaurantId}`,
           );
           setRestaurant(restRes.data.restaurant);
         }
@@ -286,10 +287,15 @@ const FoodDetailPage = () => {
             </div>
           </div>
           <button
-            onClick={() => addToCart({ ...food, quantity } as CartItem)}
-            className="flex-1 ml-4 bg-gradient-to-r from-orange-500 to-red-500 text-white py-3 px-6 rounded-xl font-bold text-sm hover:shadow-lg transition-shadow flex items-center justify-center gap-2"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              addToCart(food);
+              toast.success(`✅ ${food.title} added to cart!`);
+            }}
+            className="text-xs bg-gradient-to-r from-orange-500 to-red-500 text-white px-3 py-1.5 rounded-lg font-bold hover:shadow-sm transition-shadow flex items-center gap-1"
           >
-            <ShoppingCart className="w-4 h-4" />
+            <ShoppingCart className="w-3 h-3" />
             ADD TO CART
           </button>
         </div>

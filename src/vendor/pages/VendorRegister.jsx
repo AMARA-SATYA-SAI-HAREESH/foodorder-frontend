@@ -41,6 +41,7 @@ const VendorRegister = () => {
     imageUrl: "", // ✅ ADD THIS
     latitude: "", // ✅ ADD THIS
     longitude: "", // ✅ ADD THIS
+    city: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showMap, setShowMap] = useState(false);
@@ -432,6 +433,33 @@ const VendorRegister = () => {
                   />
                 </div>
               </div>
+
+              {/* CITY FIELD - INSERT THIS ENTIRE BLOCK */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  City <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <MapPin
+                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                    size={20}
+                  />
+                  <input
+                    type="text"
+                    value={formData.city}
+                    onChange={(e) =>
+                      setFormData({ ...formData, city: e.target.value })
+                    }
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    placeholder="e.g., Mumbai, Delhi, Bangalore"
+                    required
+                  />
+                </div>
+                <p className="mt-1 text-xs text-gray-500">
+                  Enter the city where your restaurant is located
+                </p>
+              </div>
+
               {/* Restaurant Image */}
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -468,6 +496,7 @@ const VendorRegister = () => {
                   )}
                 </div>
               </div>
+
               {/* Location Picker */}
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">

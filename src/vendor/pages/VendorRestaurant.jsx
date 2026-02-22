@@ -264,7 +264,28 @@ const VendorRestaurant = () => {
                   </p>
                 )}
               </div>
-
+              {/* City */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  City
+                </label>
+                <div className="relative">
+                  <MapPin
+                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                    size={20}
+                  />
+                  <input
+                    type="text"
+                    value={formData.city}
+                    onChange={(e) =>
+                      setFormData({ ...formData, city: e.target.value })
+                    }
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    placeholder="Pattukkottai"
+                    required
+                  />
+                </div>
+              </div>
               {/* Service Options */}
               <div>
                 <h3 className="text-sm font-medium text-gray-900 mb-3">

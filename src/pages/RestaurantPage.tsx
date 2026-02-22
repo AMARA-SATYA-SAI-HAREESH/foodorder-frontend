@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { ImageComponent } from "../utils/imageHelper";
+import toast, { Toaster } from "react-hot-toast";
 import {
   ArrowLeft,
   Star,
@@ -262,9 +263,11 @@ const RestaurantPage = () => {
                         ₹{food.price}
                       </div>
                       <button
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
                           addToCart(food);
-                          navigate("/cart"); // Navigate to cart page after adding
+                          toast.success(`✅ ${food.title} added to cart!`);
                         }}
                         className="text-xs bg-gradient-to-r from-orange-500 to-red-500 text-white px-3 py-1.5 rounded-lg font-bold hover:shadow-sm transition-shadow flex items-center gap-1"
                       >
